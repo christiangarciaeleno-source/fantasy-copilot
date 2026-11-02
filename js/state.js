@@ -6,7 +6,7 @@ export const STATE = {
   model: get('fc_model', 'gemini-2.5-flash'),
   scoring: get('fc_scoring', 'mixta'),
   research: get('fc_search', 'false') === 'true', // desactivada por defecto: suma una llamada y más espera
-  images: [], // capturas: [{ mime, b64, url }] (url = miniatura)
+  inputs: [], // capturas { mime, b64, url } (url = miniatura) o textos copiados { text }
   deferredPrompt: null,
   data: null // último análisis: { saldo, once, ventas_recomendadas, compras_mercado }
 };

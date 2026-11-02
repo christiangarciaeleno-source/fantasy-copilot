@@ -4,7 +4,8 @@ import { analyze, validate, manualPrompt, importManual } from './js/ai.js';
 import { renderAll } from './js/render.js';
 import { DEMO } from './js/demo.js';
 import { exportSummary } from './js/export.js';
-import { setupDragAndDrop, removeImage, pasteFromClipboard } from './js/image.js';
+import { setupDragAndDrop, removeImage, pasteFromClipboard, pasteText } from './js/image.js';
+import { copyBookmarklet } from './js/bookmarklet.js';
 
 // --- Navegación ---
 function switchTab(tab) {
@@ -71,7 +72,7 @@ function show(data) {
 
 async function runAnalysis() {
   haptic(25);
-  if (!STATE.images.length) return toast('Sube o pega al menos una captura antes de analizar', '📸');
+  if (!STATE.inputs.length) return toast('Sube una captura o pega texto del Fantasy antes de analizar', '📸');
   setLoading(true);
   try {
     const data = await analyze((msg) => { $('analyzeLabel').textContent = msg; });
@@ -144,7 +145,7 @@ const dismissPWA = () => $('pwaInstallBanner').classList.add('hidden');
 // Los handlers inline (onclick) del HTML necesitan globals.
 Object.assign(window, {
   switchTab, toggleSettingsModal, saveAppSettings, runAnalysis,
-  loadCompleteDemo, copyManualPrompt, importManualJson, installPWA, dismissPWA, exportSummary, removeImage, pasteFromClipboard
+  loadCompleteDemo, copyManualPrompt, importManualJson, installPWA, dismissPWA, exportSummary, removeImage, pasteFromClipboard, pasteText, copyBookmarklet
 });
 
 // --- Arranque ---

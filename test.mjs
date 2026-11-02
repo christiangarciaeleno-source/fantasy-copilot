@@ -21,7 +21,7 @@ assert.match(apiError(503, null, 'Gemini').message, /no responde/);
 assert.equal(apiError(400, 'bad request', 'Gemini').message, 'bad request');
 // --- analyze(): transporte resistente ---
 pace.wait = 0;
-Object.assign(STATE, { research: false, geminiKey: 'k', model: 'gemini-2.5-flash', images: [{ mime: 'image/jpeg', b64: 'x' }, { mime: 'image/jpeg', b64: 'y' }] });
+Object.assign(STATE, { research: false, geminiKey: 'k', model: 'gemini-2.5-flash', inputs: [{ mime: 'image/jpeg', b64: 'x' }, { mime: 'image/jpeg', b64: 'y' }, { text: 'Plantilla: Lamine Yamal 9,4' }] });
 const ok = (obj) => ({ ok: true, json: async () => ({ candidates: [{ content: { parts: [{ text: JSON.stringify(obj) }] } }] }) });
 const fail = (status) => ({ ok: false, status, json: async () => ({}) });
 let urls = [], bodies = [];
@@ -32,6 +32,7 @@ mock(() => ok(DEMO));
 assert.equal((await analyze()).once.length, 11);
 assert.equal(urls.length, 1);
 assert.equal(bodies[0].contents[0].parts.filter((p) => p.inlineData).length, 2);
+assert.ok(bodies[0].contents[0].parts.some((p) => /TEXTO COPIADO[\s\S]*Lamine Yamal/.test(p.text)));
 assert.equal(bodies[0].generationConfig.thinkingConfig.thinkingBudget, 0);
 
 // Un 503 puntual se reintenta; el 429 persistente pasa al modelo de reserva y, si también falla, avisa de la cuota.
@@ -78,4 +79,9 @@ assert.equal((await analyze()).sinInforme, true);
 assert.match(manualPrompt(), /Responde SOLO con un JSON/);
 assert.equal(importManual('Aquí tienes:\n```json\n' + JSON.stringify(DEMO) + '\n```').once.length, 11);
 assert.throws(() => importManual('no es json'), /JSON/);
+// Favorito: es un javascript: autocontenido y sin llamadas de red.
+const { BOOKMARKLET } = await import('./js/bookmarklet.js');
+assert.ok(BOOKMARKLET.startsWith('javascript:'));
+assert.doesNotThrow(() => new Function(BOOKMARKLET.slice('javascript:'.length)));
+assert.ok(!/fetch|XMLHttpRequest|sendBeacon/.test(BOOKMARKLET));
 console.log('OK');

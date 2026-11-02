@@ -99,13 +99,16 @@
           <div id="dropEmpty" class="flex flex-col items-center">
             <span class="text-2xl mb-1 group-hover:scale-110 transition">📸</span>
             <p class="text-xs font-bold text-argon-dark">Arrastra capturas o haz clic</p>
-            <p class="text-[10px] text-argon-muted mt-0.5">Hasta 4: tu plantilla, tu alineación y el mercado</p>
+            <p class="text-[10px] text-argon-muted mt-0.5">Hasta 4 entradas: plantilla, alineación y mercado (captura o texto)</p>
           </div>
           <div id="imageList" class="hidden flex-wrap justify-center gap-2 w-full mt-2 relative z-20"></div>
         </div>
         <div class="flex flex-col sm:flex-row md:flex-col gap-2.5 md:w-56 shrink-0">
           <button onclick="pasteFromClipboard()" class="flex-1 bg-gray-100 hover:bg-gray-200 active:scale-95 text-argon-dark font-bold py-2.5 px-3 rounded-xl text-xs transition flex items-center justify-center gap-2 border border-gray-200 shadow-sm">
-            <span>📋</span> Pegar del Portapapeles
+            <span>📋</span> Pegar captura
+          </button>
+          <button onclick="pasteText()" class="flex-1 bg-gray-100 hover:bg-gray-200 active:scale-95 text-argon-dark font-bold py-2.5 px-3 rounded-xl text-xs transition flex items-center justify-center gap-2 border border-gray-200 shadow-sm">
+            <span>📝</span> Pegar texto del Fantasy
           </button>
           <button id="btnAnalyze" onclick="runAnalysis()" class="flex-1 bg-argon-primary hover:bg-[#4a5fcd] active:scale-95 text-white font-bold py-3 px-4 rounded-xl shadow-argon-sm transition flex items-center justify-center gap-2">
             <span id="analyzeSpinner" class="hidden argon-spinner"></span>
@@ -115,6 +118,16 @@
           <button onclick="loadCompleteDemo()" class="w-full text-center text-[11px] font-bold text-argon-primary hover:underline py-1">
             ⚡ Cargar Demo Completa (Sin API Key)
           </button>
+          <details class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3">
+            <summary class="text-[11px] font-extrabold text-argon-dark cursor-pointer">Copiar datos desde la web del Fantasy (favorito)</summary>
+            <ol class="text-[10px] text-argon-muted mt-2 space-y-1 list-decimal pl-4">
+              <li>Pulsa "Copiar código del favorito".</li>
+              <li>En Chrome: abre cualquier página, menú ⋮ → ☆ guardar en favoritos, y luego ⋮ → Favoritos → mantén pulsado el favorito → Editar. Ponle el nombre <b>FantasyCopiar</b> y pega el código en la URL.</li>
+              <li>Entra en la web del Fantasy con tu sesión, abre Plantilla, Alineación o Mercado, escribe <b>FantasyCopiar</b> en la barra de direcciones y toca el favorito que sale (con la estrella).</li>
+              <li>Vuelve a esta app y pulsa "Pegar texto del Fantasy". Repite con cada pantalla.</li>
+            </ol>
+            <button onclick="copyBookmarklet()" class="w-full mt-2 bg-white hover:bg-gray-100 active:scale-95 text-argon-dark font-bold py-2 rounded-xl text-xs border border-gray-200 transition">📋 Copiar código del favorito</button>
+          </details>
           <details class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3">
             <summary class="text-[11px] font-extrabold text-argon-dark cursor-pointer">Modo manual (sin API Key ni cuotas)</summary>
             <ol class="text-[10px] text-argon-muted mt-2 space-y-1 list-decimal pl-4">

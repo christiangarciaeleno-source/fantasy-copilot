@@ -30,7 +30,7 @@ export const SCHEMA = obj({
 });
 
 const prompt = (report = '', hint = '') => `Eres el analista de élite de Movistar Fantasy MARCA (LaLiga española).
-Recibes de 1 a 4 capturas del usuario, en cualquier orden: su plantilla completa, su alineación actual, el mercado y/o su saldo. Identifica qué es cada una y cruza la información.
+Recibes de 1 a 4 entradas del usuario (capturas y/o texto copiado de la web del Fantasy), en cualquier orden: su plantilla completa, su alineación actual, el mercado y/o su saldo. Identifica qué es cada una y cruza la información.
 Sistema de puntuación: ${STATE.scoring}.
 Reglas: todos los importes (saldo, vm, puja_sugerida) en euros como número entero (1,85 M€ = 1850000).
 "once": el mejor once posible con los jugadores de la PLANTILLA (si se ve la alineación actual, mejórala), 11 jugadores con formación válida (sin capitán).
@@ -45,7 +45,7 @@ ${report}
 </informe>`}${hint && `
 ATENCIÓN: ${hint}`}`;
 
-const RESEARCH = `Mira las capturas de Movistar Fantasy MARCA (LaLiga). Busca en la web, en medios especializados (Sofascore, Marca, AS, Transfermarkt, Comunio, Jornada Perfecta), lo MÁS RECIENTE sobre los jugadores y equipos que aparecen: lesiones y sancionados, alineaciones probables, forma de las últimas jornadas, rivales de la próxima jornada y noticias de mercado. Responde con un informe breve en texto (máx. 300 palabras) indicando fuente y fecha de cada dato. No inventes: si no lo encuentras, dilo.`;
+const RESEARCH = `Mira las capturas o textos de Movistar Fantasy MARCA (LaLiga). Busca en la web, en medios especializados (Sofascore, Marca, AS, Transfermarkt, Comunio, Jornada Perfecta), lo MÁS RECIENTE sobre los jugadores y equipos que aparecen: lesiones y sancionados, alineaciones probables, forma de las últimas jornadas, rivales de la próxima jornada y noticias de mercado. Responde con un informe breve en texto (máx. 300 palabras) indicando fuente y fecha de cada dato. No inventes: si no lo encuentras, dilo.`;
 
 // Mensajes cortos en español para los fallos que el usuario puede arreglar; el resto, el texto de la API.
 export function apiError(status, apiMsg, name) {
@@ -114,17 +114,20 @@ async function gemini(body, timeout = TIMEOUT, deadline = DEADLINE) {
   throw last;
 }
 
-const geminiParts = (imgs, text) => [{ text }, ...imgs.map((i) => ({ inlineData: { mimeType: i.mime, data: i.b64 } }))];
+// Cada entrada es una captura (inlineData) o texto copiado de la web del Fantasy.
+const geminiParts = (inputs, text) => [{ text }, ...inputs.map((i) => (i.text
+  ? { text: `TEXTO COPIADO DE LA WEB DEL FANTASY DEL USUARIO:\n${i.text}` }
+  : { inlineData: { mimeType: i.mime, data: i.b64 } }))];
 
 // Gemini no admite responseSchema junto a googleSearch: la búsqueda va en una llamada aparte (research).
-const callGemini = async (imgs, report, hint) => extractJson(await gemini({
-  contents: [{ parts: geminiParts(imgs, prompt(report, hint)) }],
+const callGemini = async (inputs, report, hint) => extractJson(await gemini({
+  contents: [{ parts: geminiParts(inputs, prompt(report, hint)) }],
   generationConfig: { temperature: 0.15, responseMimeType: 'application/json', responseSchema: SCHEMA }
 }));
 
 // La búsqueda es opcional: con tope corto para no sumar un minuto de espera si Google va lento.
-const researchGemini = (imgs) => gemini({
-  contents: [{ parts: geminiParts(imgs, RESEARCH) }],
+const researchGemini = (inputs) => gemini({
+  contents: [{ parts: geminiParts(inputs, RESEARCH) }],
   tools: [{ googleSearch: {} }]
 }, 30000, 35000); // un solo intento: si va lenta, se sigue sin informe
 
@@ -170,14 +173,14 @@ export async function analyze(status = () => {}) {
   notify = status;
   // La búsqueda es un extra: si falla (cuota, sin resultados) se analiza solo con la captura.
   if (STATE.research) status('Buscando en medios…');
-  const report = STATE.research ? await researchGemini(STATE.images).catch(() => '') : '';
+  const report = STATE.research ? await researchGemini(STATE.inputs).catch(() => '') : '';
   const sinInforme = STATE.research && !report; // la UI avisa: los datos no son de medios
   status('Analizando captura…');
   try {
-    return { ...validate(await callGemini(STATE.images, report)), sinInforme };
+    return { ...validate(await callGemini(STATE.inputs, report)), sinInforme };
   } catch (err) {
     if (!/jugadores válidos|extraer el JSON/.test(err.message)) throw err;
     status('Reintentando…');
-    return { ...validate(await callGemini(STATE.images, report, HINT)), sinInforme }; // la IA a veces falla el formato: un reintento con pista
+    return { ...validate(await callGemini(STATE.inputs, report, HINT)), sinInforme }; // la IA a veces falla el formato: un reintento con pista
   }
 }
