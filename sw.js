@@ -1,5 +1,5 @@
 // Subir CACHE al cambiar cualquier asset para invalidar la caché anterior.
-const CACHE = 'fantasy-pro-v1';
+const CACHE = 'fantasy-pro-v2';
 const PRECACHE = [
   './', 'index.html', 'styles.css', 'tw-config.js', 'app.js', 'manifest.json', 'icon.svg',
   'js/util.js', 'js/state.js', 'js/ai.js', 'js/render.js', 'js/demo.js', 'js/export.js', 'js/image.js'

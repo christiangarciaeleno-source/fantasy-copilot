@@ -1,5 +1,6 @@
 import { STATE } from './state.js';
 
+const GEMINI = 'https://generativelanguage.googleapis.com/v1beta';
 const CLAUDE_MODEL = 'claude-sonnet-5-5';
 
 const S = { type: 'STRING' };
@@ -32,6 +33,18 @@ Reglas: todos los importes (saldo, vm, puja_sugerida) en euros como número ente
 "compras_mercado": fichajes del mercado visible con puja sugerida; vacío si no se ve el mercado.
 Si un dato no aparece en la captura, estímalo con criterio y mantén listas vacías en lugar de inventar jugadores.`;
 
+async function latestModel(family) {
+  const res = await fetch(`${GEMINI}/models?pageSize=200`, { headers: { 'x-goog-api-key': STATE.geminiKey } });
+  if (!res.ok) return null;
+  const ver = (n) => parseFloat(n.match(/gemini-(\d+(?:\.\d+)?)/)?.[1] ?? 0);
+  const ok = new RegExp(`^gemini-[\\d.]+-${family}$`); // excluye lite, preview, exp, tts, image...
+  return (await res.json()).models
+    .filter((m) => m.supportedGenerationMethods?.includes('generateContent'))
+    .map((m) => m.name.replace('models/', ''))
+    .filter((n) => ok.test(n))
+    .sort((a, b) => ver(b) - ver(a))[0] ?? null;
+}
+
 // Gemini no admite responseSchema junto a googleSearch: con grounding se confía en el prompt + extractJson.
 async function callGemini(img) {
   const body = {
@@ -41,11 +54,17 @@ async function callGemini(img) {
   if (STATE.grounding) body.tools = [{ googleSearch: {} }];
   else Object.assign(body.generationConfig, { responseMimeType: 'application/json', responseSchema: SCHEMA });
 
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${STATE.model}:generateContent`, {
+  const post = (model) => fetch(`${GEMINI}/models/${model}:generateContent`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': STATE.geminiKey },
     body: JSON.stringify(body)
   });
+  let res = await post(STATE.model);
+  // Modelo retirado/no disponible: se busca el más reciente de la misma familia con la clave del usuario.
+  if (res.status === 404) {
+    const model = await latestModel(STATE.model.includes('pro') ? 'pro' : 'flash');
+    if (model) { STATE.model = model; localStorage.setItem('fc_model', model); res = await post(model); }
+  }
   const data = await res.json();
   if (!res.ok) throw new Error(data.error?.message || 'Error en la API de Gemini');
   const text = data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? '').join('');
