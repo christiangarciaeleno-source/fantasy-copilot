@@ -11,7 +11,7 @@
 ├── sw.js                            37   Service Worker (precache + stale-while-revalidate)
 ├── manifest.json                    13   standalone, portrait, #5e72e4
 ├── styles.css                       70
-├── tw-config.js                     20   Tema Tailwind (CDN)
+├── tailwind.config.js                     20   Tema Tailwind (CDN)
 ├── icon.svg                          1
 ├── js/
 │   ├── ai.js                       127   Motor Gemini (búsqueda + análisis) + esquema JSON
@@ -57,3 +57,4 @@ Regla: ningún archivo supera 300 líneas (máximo actual: `index.html`, 291).
 8. **Seguridad de claves**: valorar un proxy ligero si la app se comparte con más gente.
 
 - Decisión: solo Gemini (capa gratuita); se eliminó el motor Claude por ser de pago.
+- CSS: `app.css` se genera con `./build-css.sh` (Tailwind CLI 3.4.17 + `styles.css`); regenerarlo si se añaden clases nuevas en `index.html` o `js/`. Ya no se compila Tailwind en el móvil.
