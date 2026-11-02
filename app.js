@@ -84,9 +84,10 @@ async function runAnalysis() {
   if (!STATE.image) return toast('Sube o pega una captura antes de analizar', '📸');
   setLoading(true);
   try {
-    show(await analyze());
+    const data = await analyze();
+    show(data);
     haptic(40);
-    toast('¡Análisis táctico completado!', '⚽');
+    data.sinInforme ? toast('Analizado solo con la captura: la búsqueda en medios falló', '⚠️') : toast('¡Análisis táctico completado!', '⚽');
   } catch (err) {
     if (err.code === 'NOKEY') {
       toggleSettingsModal();

@@ -39,4 +39,23 @@ assert.equal(bodies.length, 2);
 assert.ok(bodies[0].tools?.[0].googleSearch && !bodies[1].tools);
 globalThis.fetch = async (_, o) => (JSON.parse(o.body).tools ? { ok: false, status: 500, json: async () => ({}) } : reply(DEMO));
 assert.equal((await analyze()).once.length, 11);
+// Claude: tool_use forzado, y con búsqueda el informe llega delimitado al prompt del análisis.
+Object.assign(STATE, { engine: 'claude', claudeKey: 'k', research: true });
+const sent = [];
+globalThis.fetch = async (_, o) => {
+  const b = JSON.parse(o.body); sent.push(b);
+  const content = b.tool_choice ? [{ type: 'tool_use', input: DEMO }] : [{ type: 'text', text: 'Lamine Yamal duda (Sofascore)' }];
+  return { ok: true, json: async () => ({ content }) };
+};
+const res = await analyze();
+assert.equal(res.once.length, 11);
+assert.equal(res.sinInforme, false);
+assert.equal(sent[0].tools[0].type, 'web_search_20250305');
+assert.equal(sent[1].tool_choice.name, 'registrar_analisis');
+assert.match(sent[1].messages[0].content[1].text, /<informe>\nLamine Yamal duda/);
+// Si la búsqueda falla se avisa con sinInforme.
+globalThis.fetch = async (_, o) => JSON.parse(o.body).tool_choice
+  ? { ok: true, json: async () => ({ content: [{ type: 'tool_use', input: DEMO }] }) }
+  : { ok: false, status: 500, json: async () => ({}) };
+assert.equal((await analyze()).sinInforme, true);
 console.log('OK');

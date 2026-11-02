@@ -83,7 +83,7 @@ const emptyBox = (icon, msg) => `<div class="col-span-full bg-white rounded-2xl 
 
 function renderMarket(compras) {
   $('marketCardsGrid').innerHTML = compras.length ? compras.map((m) => {
-    const [color, label] = BADGES[m.tipo] ?? ['bg-gray-100 text-gray-600', '⚪ ' + esc(m.tipo)];
+    const [color, label] = (Object.hasOwn(BADGES, m.tipo) && BADGES[m.tipo]) || ['bg-gray-100 text-gray-600', '⚪ ' + esc(m.tipo)];
     return `
       <div class="bg-white rounded-2xl shadow-argon-sm p-4 border border-gray-100 hover:shadow-argon transition">
         <div class="flex justify-between items-start">
