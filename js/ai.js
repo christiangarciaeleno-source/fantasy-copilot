@@ -1,7 +1,6 @@
 import { STATE } from './state.js';
 
 const GEMINI = 'https://generativelanguage.googleapis.com/v1beta';
-const CLAUDE_MODEL = 'claude-sonnet-5-5';
 const TIMEOUT = 60000; // con mala cobertura el fetch no debe dejar el spinner colgado
 
 const S = { type: 'STRING' };
@@ -9,7 +8,6 @@ const N = { type: 'NUMBER' };
 const obj = (properties) => ({ type: 'OBJECT', properties, required: Object.keys(properties) });
 const list = (items, extra = {}) => ({ type: 'ARRAY', items, ...extra });
 
-// Tipos en MAYÚSCULAS (formato Gemini); toClaudeSchema los pasa a minúsculas.
 export const SCHEMA = obj({
   saldo: { type: 'NUMBER', description: 'Saldo actual en euros; negativo si hay deuda' },
   once: list(obj({
@@ -23,8 +21,6 @@ export const SCHEMA = obj({
     tipo: { type: 'STRING', enum: ['especulacion', 'chollo', 'burbuja'] }
   }))
 });
-
-const toClaudeSchema = (s) => JSON.parse(JSON.stringify(s).replace(/"type":"([A-Z]+)"/g, (_, t) => `"type":"${t.toLowerCase()}"`));
 
 const prompt = (report = '') => `Eres el analista de élite de Movistar Fantasy MARCA (LaLiga española).
 La imagen es una captura de la plantilla, del saldo o del mercado del usuario. Sistema de puntuación: ${STATE.scoring}.
@@ -73,7 +69,7 @@ async function gemini(body) {
   let res = await post(STATE.model);
   // Modelo retirado/no disponible: se busca el más reciente de la misma familia con la clave del usuario.
   if (res.status === 404) {
-    const model = await latestModel(STATE.model.includes('pro') ? 'pro' : 'flash');
+    const model = await latestModel('flash');
     if (model) { STATE.model = model; localStorage.setItem('fc_model', model); res = await post(model); }
   }
   const data = await res.json().catch(() => ({}));
@@ -96,51 +92,6 @@ const researchGemini = (img) => gemini({
   tools: [{ googleSearch: {} }]
 });
 
-async function claude(body) {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': STATE.claudeKey,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true'
-    },
-    body: JSON.stringify({ model: CLAUDE_MODEL, ...body }),
-    signal: AbortSignal.timeout(TIMEOUT)
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw apiError(res.status, data.error?.message, 'Claude');
-  return data;
-}
-
-const claudeMsg = (img, text) => [{ role: 'user', content: [
-  { type: 'image', source: { type: 'base64', media_type: img.mime, data: img.b64 } },
-  { type: 'text', text }
-] }];
-
-// tool_choice forzado = Claude solo puede responder rellenando el esquema.
-async function callClaude(img, report) {
-  const data = await claude({
-    max_tokens: 4096,
-    temperature: 0.15,
-    tools: [{ name: 'registrar_analisis', description: 'Registra el análisis estructurado de Fantasy', input_schema: toClaudeSchema(SCHEMA) }],
-    tool_choice: { type: 'tool', name: 'registrar_analisis' },
-    messages: claudeMsg(img, prompt(report))
-  });
-  const call = data.content?.find((b) => b.type === 'tool_use');
-  if (!call) throw new Error('Claude no devolvió datos estructurados');
-  return call.input;
-}
-
-async function researchClaude(img) {
-  const data = await claude({
-    max_tokens: 2048,
-    tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 5 }],
-    messages: claudeMsg(img, RESEARCH)
-  });
-  return data.content.filter((b) => b.type === 'text').map((b) => b.text).join('');
-}
-
 export function extractJson(text) {
   const m = text.replace(/```json|```/g, '').match(/\{[\s\S]*\}/);
   if (!m) throw new Error('No se pudo extraer el JSON de análisis');
@@ -158,16 +109,14 @@ export function validate(r) {
 }
 
 export async function analyze() {
-  const isClaude = STATE.engine === 'claude';
-  if (!(isClaude ? STATE.claudeKey : STATE.geminiKey)) throw Object.assign(new Error('Falta la API Key'), { code: 'NOKEY' });
-  const call = isClaude ? callClaude : callGemini;
+  if (!STATE.geminiKey) throw Object.assign(new Error('Falta la API Key'), { code: 'NOKEY' });
   // La búsqueda es un extra: si falla (cuota, sin resultados) se analiza solo con la captura.
-  const report = STATE.research ? await (isClaude ? researchClaude : researchGemini)(STATE.image).catch(() => '') : '';
+  const report = STATE.research ? await researchGemini(STATE.image).catch(() => '') : '';
   const sinInforme = STATE.research && !report; // la UI avisa: los datos no son de medios
   try {
-    return { ...validate(await call(STATE.image, report)), sinInforme };
+    return { ...validate(await callGemini(STATE.image, report)), sinInforme };
   } catch (err) {
     if (!/jugadores válidos|extraer el JSON/.test(err.message)) throw err;
-    return { ...validate(await call(STATE.image, report)), sinInforme }; // la IA a veces falla el formato: un reintento basta
+    return { ...validate(await callGemini(STATE.image, report)), sinInforme }; // la IA a veces falla el formato: un reintento basta
   }
 }

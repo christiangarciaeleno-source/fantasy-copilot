@@ -14,7 +14,7 @@
 ├── tw-config.js                     20   Tema Tailwind (CDN)
 ├── icon.svg                          1
 ├── js/
-│   ├── ai.js                       127   Motor dual Gemini/Claude + esquema JSON
+│   ├── ai.js                       127   Motor Gemini (búsqueda + análisis) + esquema JSON
 │   ├── render.js                   114   Pizarra, saldo, mercado, ventas
 │   ├── image.js                     59   Captura: drag&drop, input, portapapeles
 │   ├── state.js                     37   STATE + persistencia localStorage
@@ -38,9 +38,9 @@ Regla: ningún archivo supera 300 líneas (máximo actual: `index.html`, 291).
 
 ## 3. Pendiente / no verificado
 
-- Gemini responde desde el Pixel; falta una llamada completa con éxito (la clave probada dio "prepayment credits depleted", problema de facturación de Google). Claude sin probar.
+- Gemini responde desde el Pixel; falta una llamada completa con éxito (la clave probada dio "prepayment credits depleted", problema de facturación de Google).
 - Service Worker sin verificar en Chrome real (el navegador integrado no lo registró).
-- Búsqueda en medios (interruptor en Ajustes, activa por defecto): llamada previa con googleSearch (Gemini) o web_search (Claude) que genera un informe que se añade al prompt del análisis estructurado. Sin probar con claves reales.
+- Búsqueda en medios (interruptor en Ajustes, activa por defecto): llamada previa con googleSearch que genera un informe que se añade al prompt del análisis estructurado. Sin probar con claves reales.
 - Grounding eliminado: gastaba más cuota y no permitía forzar el esquema JSON.
 
 - Seguridad: las claves viven en `localStorage` del origen `*.github.io`; no alojar otras páginas de la cuenta que no sean de confianza.
@@ -55,3 +55,5 @@ Regla: ningún archivo supera 300 líneas (máximo actual: `index.html`, 291).
 6. **Historial multi-jornada**: guardar varios análisis (no solo el último) y compararlos.
 7. **Reintento automático** si `validate` rechaza el once (ya valida 11 jugadores y posiciones; sin capitán, es premium).
 8. **Seguridad de claves**: valorar un proxy ligero si la app se comparte con más gente.
+
+- Decisión: solo Gemini (capa gratuita); se eliminó el motor Claude por ser de pago.

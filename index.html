@@ -226,19 +226,12 @@
       <div class="px-6 py-4 bg-gradient-argon text-white flex justify-between items-center">
         <div>
           <h3 class="font-extrabold text-base">Ajustes & Conectividad IA</h3>
-          <p class="text-white/80 text-[11px]">Elige motor, API Key privada y reglas</p>
+          <p class="text-white/80 text-[11px]">API Key de Gemini y reglas</p>
         </div>
         <button onclick="toggleSettingsModal()" class="text-white/80 hover:text-white text-lg font-bold">✕</button>
       </div>
       <div class="p-6 space-y-4">
-        <div>
-          <label class="block text-[11px] font-extrabold text-argon-muted uppercase tracking-wider mb-1.5">Motor de IA</label>
-          <select id="selectEngine" onchange="syncEngineFields()" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-xs font-bold text-argon-dark focus:outline-none focus:border-argon-primary">
-            <option value="gemini">Google Gemini (Flash/Pro)</option>
-            <option value="claude">Anthropic Claude (Sonnet)</option>
-          </select>
-        </div>
-        <div data-eng="gemini" class="space-y-4">
+        <div class="space-y-4">
           <div>
             <label class="block text-[11px] font-extrabold text-argon-muted uppercase tracking-wider mb-1.5">Google Gemini API Key</label>
             <input type="password" id="inputGeminiKey" placeholder="AIzaSy..." class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-xs text-argon-dark font-mono focus:outline-none focus:border-argon-primary">
@@ -247,15 +240,10 @@
             <label class="block text-[11px] font-extrabold text-argon-muted uppercase tracking-wider mb-1.5">Modelo Gemini</label>
             <select id="selectModel" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-xs font-bold text-argon-dark focus:outline-none focus:border-argon-primary">
               <option value="gemini-2.5-flash">Gemini 2.5 Flash (rápido)</option>
-              <option value="gemini-2.5-pro">Gemini 2.5 Pro (máximo razonamiento)</option>
             </select>
           </div>
         </div>
-        <div data-eng="claude" class="hidden">
-          <label class="block text-[11px] font-extrabold text-argon-muted uppercase tracking-wider mb-1.5">Anthropic API Key</label>
-          <input type="password" id="inputClaudeKey" placeholder="sk-ant-..." class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-xs text-argon-dark font-mono focus:outline-none focus:border-argon-primary">
-        </div>
-        <p class="text-[10px] text-gray-400">Las claves se guardan solo en este dispositivo (<code>localStorage</code>) y se envían directamente al proveedor elegido.</p>
+        <p class="text-[10px] text-gray-400">La clave se guarda solo en este dispositivo (<code>localStorage</code>) y se envía directamente a Google.</p>
         <div>
           <label class="block text-[11px] font-extrabold text-argon-muted uppercase tracking-wider mb-1.5">Sistema de Puntuación de tu Liga</label>
           <select id="selectScoring" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-xs font-bold text-argon-dark focus:outline-none focus:border-argon-primary">

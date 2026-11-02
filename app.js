@@ -26,11 +26,6 @@ function switchTab(tab) {
 }
 
 // --- Ajustes ---
-function syncEngineFields() {
-  const engine = $('selectEngine').value;
-  document.querySelectorAll('[data-eng]').forEach((el) => el.classList.toggle('hidden', el.dataset.eng !== engine));
-}
-
 function toggleSettingsModal() {
   haptic(10);
   $('settingsModal').classList.toggle('hidden');
@@ -38,23 +33,18 @@ function toggleSettingsModal() {
 }
 
 function loadSettingsForm() {
-  $('selectEngine').value = STATE.engine;
   $('inputGeminiKey').value = STATE.geminiKey;
-  $('inputClaudeKey').value = STATE.claudeKey;
   const sel = $('selectModel');
   // El fallback puede haber guardado un modelo que no está en la lista: se añade para no guardar ''.
   if (![...sel.options].some((o) => o.value === STATE.model)) sel.add(new Option(STATE.model, STATE.model));
   sel.value = STATE.model;
   $('selectScoring').value = STATE.scoring;
   $('toggleResearch').checked = STATE.research;
-  syncEngineFields();
 }
 
 function saveAppSettings() {
   Object.assign(STATE, {
-    engine: $('selectEngine').value,
     geminiKey: $('inputGeminiKey').value.trim(),
-    claudeKey: $('inputClaudeKey').value.trim(),
     model: $('selectModel').value,
     scoring: $('selectScoring').value,
     research: $('toggleResearch').checked
@@ -129,7 +119,7 @@ const dismissPWA = () => $('pwaInstallBanner').classList.add('hidden');
 
 // Los handlers inline (onclick) del HTML necesitan globals.
 Object.assign(window, {
-  switchTab, syncEngineFields, toggleSettingsModal, saveAppSettings, runAnalysis,
+  switchTab, toggleSettingsModal, saveAppSettings, runAnalysis,
   loadCompleteDemo, installPWA, dismissPWA, exportSummary, removeImage, pasteFromClipboard
 });
 

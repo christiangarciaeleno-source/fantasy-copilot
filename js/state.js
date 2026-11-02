@@ -2,9 +2,7 @@
 const get = (k, d = '') => { try { return localStorage.getItem(k) ?? d; } catch { return d; } };
 
 export const STATE = {
-  engine: get('fc_engine', 'gemini'),
   geminiKey: get('fc_gemini_key'),
-  claudeKey: get('fc_claude_key'),
   model: get('fc_model', 'gemini-2.5-flash'),
   scoring: get('fc_scoring', 'mixta'),
   research: get('fc_research', 'true') === 'true',
@@ -14,9 +12,7 @@ export const STATE = {
 };
 
 export function saveSettings() {
-  localStorage.setItem('fc_engine', STATE.engine);
   localStorage.setItem('fc_gemini_key', STATE.geminiKey);
-  localStorage.setItem('fc_claude_key', STATE.claudeKey);
   localStorage.setItem('fc_model', STATE.model);
   localStorage.setItem('fc_scoring', STATE.scoring);
   localStorage.setItem('fc_research', STATE.research);

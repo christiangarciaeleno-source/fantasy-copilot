@@ -10,7 +10,7 @@ export function setupDragAndDrop() {
   zone.addEventListener('drop', (e) => e.dataTransfer.files.length && handleFile(e.dataTransfer.files[0]));
 }
 
-// Máx. 1600px y JPEG: Claude rechaza >5 MB y la subida móvil es más rápida.
+// Máx. 1600px y JPEG: la subida móvil es más rápida.
 async function shrink(file) {
   const bmp = await createImageBitmap(file);
   const k = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
