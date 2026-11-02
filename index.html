@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full antialiased">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Fantasy Copilot Pro | MARCA & LaLiga</title>
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#5e72e4">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="tw-config.js"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="text-argon-dark font-sans flex flex-col min-h-screen">
+
+  <!-- PWA Install Banner -->
+  <div id="pwaInstallBanner" class="hidden bg-emerald-600 text-white px-4 py-2.5 shadow-md flex items-center justify-between z-50 text-xs font-semibold">
+    <div class="flex items-center gap-2">
+      <span class="text-base">📲</span>
+      <span>Instala Fantasy Copilot Pro para acceso instantáneo</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <button onclick="installPWA()" class="bg-white text-emerald-700 px-3 py-1 rounded-full text-xs font-bold shadow-sm active:scale-95 transition">Instalar</button>
+      <button onclick="dismissPWA()" class="text-white/80 hover:text-white px-1 text-sm font-bold">✕</button>
+    </div>
+  </div>
+
+  <header class="bg-gradient-argon pt-6 pb-24 px-4 md:px-8 relative shadow-md">
+    <div class="max-w-5xl mx-auto flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 bg-white rounded-full flex items-center justify-center shadow-argon-sm text-2xl">⚽</div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-white font-extrabold text-xl tracking-tight">Fantasy Copilot</h1>
+            <span class="bg-white/20 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider backdrop-blur-sm">MARCA</span>
+          </div>
+          <p class="text-white/85 text-xs font-semibold">Asistente Táctico & Financiero de LaLiga</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="exportSummary()" class="bg-white/15 hover:bg-white/25 active:scale-95 text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition backdrop-blur-sm border border-white/20 shadow-sm" title="Exportar resumen para WhatsApp/Telegram">
+          <span>📋</span> <span class="hidden sm:inline">Exportar Resumen</span>
+        </button>
+        <button onclick="toggleSettingsModal()" class="w-10 h-10 bg-white/15 hover:bg-white/25 active:scale-95 text-white rounded-xl flex items-center justify-center transition backdrop-blur-sm border border-white/20 shadow-sm" title="Ajustes de IA y Liga">
+          <span class="text-base">⚙️</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto w-full px-4 md:px-8 -mt-16 relative z-10 flex-1 flex flex-col gap-6">
+
+    <!-- KPI cards -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div class="bg-white rounded-xl p-3.5 shadow-argon-sm border border-gray-100 flex items-center justify-between">
+        <div>
+          <p class="text-[10px] font-bold text-argon-muted uppercase tracking-wider">Saldo Jornada</p>
+          <h3 id="kpiBalance" class="text-base md:text-lg font-extrabold text-argon-success mt-0.5">+0.00 M€</h3>
+          <span id="kpiBalanceBadge" class="inline-block text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-50 text-argon-success mt-1">POSITIVO (OK)</span>
+        </div>
+        <div class="w-9 h-9 rounded-full bg-emerald-50 text-argon-success flex items-center justify-center text-sm font-bold shrink-0">💰</div>
+      </div>
+      <div class="bg-white rounded-xl p-3.5 shadow-argon-sm border border-gray-100 flex items-center justify-between">
+        <div>
+          <p class="text-[10px] font-bold text-argon-muted uppercase tracking-wider">xP Proyectados</p>
+          <h3 id="kpiXP" class="text-base md:text-lg font-extrabold text-argon-info mt-0.5">-- pts</h3>
+          <span id="kpiFormation" class="inline-block text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-cyan-50 text-argon-info mt-1">Formación: --</span>
+        </div>
+        <div class="w-9 h-9 rounded-full bg-cyan-50 text-argon-info flex items-center justify-center text-sm font-bold shrink-0">📈</div>
+      </div>
+      <div class="bg-white rounded-xl p-3.5 shadow-argon-sm border border-gray-100 flex items-center justify-between">
+        <div>
+          <p class="text-[10px] font-bold text-argon-muted uppercase tracking-wider">Capitán Doble</p>
+          <h3 id="kpiCaptain" class="text-base md:text-lg font-extrabold text-argon-warning mt-0.5 truncate max-w-[100px]">--</h3>
+          <span class="inline-block text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-orange-50 text-argon-warning mt-1">x2 Puntuación</span>
+        </div>
+        <div class="w-9 h-9 rounded-full bg-orange-50 text-argon-warning flex items-center justify-center text-xs font-black shrink-0">C</div>
+      </div>
+      <div class="bg-white rounded-xl p-3.5 shadow-argon-sm border border-gray-100 flex items-center justify-between">
+        <div>
+          <p class="text-[10px] font-bold text-argon-muted uppercase tracking-wider">Ventas Sugeridas</p>
+          <h3 id="kpiAlertCount" class="text-base md:text-lg font-extrabold text-argon-danger mt-0.5">0</h3>
+          <span id="kpiAlertSub" class="inline-block text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-rose-50 text-argon-danger mt-1">Sin ventas pendientes</span>
+        </div>
+        <div class="w-9 h-9 rounded-full bg-rose-50 text-argon-danger flex items-center justify-center text-sm font-bold shrink-0">⚠️</div>
+      </div>
+    </div>
+
+    <!-- Screenshot upload & actions -->
+    <div class="bg-white rounded-2xl shadow-argon p-4 md:p-5 border border-gray-100">
+      <div class="flex flex-col md:flex-row gap-4 items-stretch md:items-center">
+        <div id="dropzoneBox" class="flex-1 border-2 border-dashed border-gray-200 hover:border-argon-primary rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer bg-gray-50/60 transition group relative min-h-[110px]">
+          <input type="file" id="fileInput" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer z-10">
+          <div id="dropEmpty" class="flex flex-col items-center">
+            <span class="text-2xl mb-1 group-hover:scale-110 transition">📸</span>
+            <p class="text-xs font-bold text-argon-dark">Arrastra captura o haz clic</p>
+            <p class="text-[10px] text-argon-muted mt-0.5">Pantallazos de plantilla, saldo o mercado</p>
+          </div>
+          <div id="dropPreview" class="hidden items-center justify-between w-full px-2 z-20">
+            <div class="flex items-center gap-3">
+              <img id="imageThumbnail" class="h-14 w-14 object-cover rounded-lg border border-gray-200 shadow-sm" alt="Preview">
+              <div class="text-left">
+                <p id="imageFilename" class="text-xs font-bold text-argon-dark truncate max-w-[160px]">captura.png</p>
+                <span class="text-[10px] text-argon-success font-bold flex items-center gap-1">✓ Lista para procesar</span>
+              </div>
+            </div>
+            <button onclick="removeImage(event)" class="text-xs font-bold text-argon-danger hover:underline px-2 py-1 bg-red-50 rounded-lg">Borrar</button>
+          </div>
+        </div>
+        <div class="flex flex-col sm:flex-row md:flex-col gap-2.5 md:w-56 shrink-0">
+          <button onclick="pasteFromClipboard()" class="flex-1 bg-gray-100 hover:bg-gray-200 active:scale-95 text-argon-dark font-bold py-2.5 px-3 rounded-xl text-xs transition flex items-center justify-center gap-2 border border-gray-200 shadow-sm">
+            <span>📋</span> Pegar del Portapapeles
+          </button>
+          <button id="btnAnalyze" onclick="runAnalysis()" class="flex-1 bg-argon-primary hover:bg-[#4a5fcd] active:scale-95 text-white font-bold py-3 px-4 rounded-xl shadow-argon-sm transition flex items-center justify-center gap-2">
+            <span id="analyzeSpinner" class="hidden argon-spinner"></span>
+            <span id="analyzeIcon">⚡</span>
+            <span id="analyzeLabel" class="text-xs tracking-wide uppercase font-extrabold">Analizar con IA</span>
+          </button>
+          <button onclick="loadCompleteDemo()" class="w-full text-center text-[11px] font-bold text-argon-primary hover:underline py-1">
+            ⚡ Cargar Demo Completa (Sin API Key)
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Desktop tabs -->
+    <div class="hidden md:flex gap-2 bg-white p-1.5 rounded-xl shadow-sm border border-gray-100 self-start">
+      <button onclick="switchTab('once')" id="tabBtn-once" class="tab-pill active px-4 py-2 rounded-lg text-xs font-extrabold transition bg-argon-primary/10 text-argon-primary">⚽ Mi Once & Jornada</button>
+      <button onclick="switchTab('mercado')" id="tabBtn-mercado" class="tab-pill px-4 py-2 rounded-lg text-xs font-extrabold transition text-gray-500 hover:bg-gray-50">📈 Radar de Mercado & Fichajes</button>
+      <button onclick="switchTab('cartera')" id="tabBtn-cartera" class="tab-pill px-4 py-2 rounded-lg text-xs font-extrabold transition text-gray-500 hover:bg-gray-50">💼 Cartera & Ventas</button>
+    </div>
+
+    <!-- TAB 1: MI ONCE -->
+    <div id="view-once" class="tab-view active">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        <div class="lg:col-span-1">
+          <div class="bg-white rounded-2xl shadow-argon p-5 border border-gray-100">
+            <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+              <h3 class="font-extrabold text-sm text-argon-dark flex items-center gap-2"><span>⚖️</span> Plan de Saldo & Ventas</h3>
+              <span id="badgeSaleStatus" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-argon-success">Saldo OK</span>
+            </div>
+            <div id="salesContent" class="mt-4 space-y-3">
+              <p class="text-xs text-argon-muted italic">Carga una captura para comprobar si estás en negativo antes de que empiece la jornada.</p>
+            </div>
+          </div>
+        </div>
+        <div class="lg:col-span-2">
+          <div class="bg-white rounded-2xl shadow-argon p-4 md:p-5 border border-gray-100">
+            <div class="flex items-center justify-between mb-3 px-1">
+              <div>
+                <h3 class="text-sm font-extrabold text-argon-dark">Alineación Recomendada</h3>
+                <p id="pitchSubLabel" class="text-[11px] text-argon-muted font-semibold">Maximización de puntos xP</p>
+              </div>
+              <span class="text-[10px] font-bold bg-argon-primary/10 text-argon-primary px-2.5 py-1 rounded-full uppercase">Movistar Fantasy MARCA</span>
+            </div>
+            <div class="tactical-pitch h-[520px] w-full flex flex-col justify-between py-6 px-3">
+              <div class="pitch-line-center"></div>
+              <div class="pitch-circle-center"></div>
+              <div class="pitch-box-top"></div>
+              <div class="pitch-box-bottom"></div>
+              <div id="pitchLineDEL" class="relative z-10 flex justify-around items-center w-full"></div>
+              <div id="pitchLineMED" class="relative z-10 flex justify-around items-center w-full"></div>
+              <div id="pitchLineDEF" class="relative z-10 flex justify-around items-center w-full"></div>
+              <div id="pitchLinePOR" class="relative z-10 flex justify-center items-center w-full"></div>
+            </div>
+            <div class="mt-3 flex items-center justify-between text-[11px] text-argon-muted px-2">
+              <div class="flex items-center gap-3">
+                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-argon-success"></span> Titular seguro</span>
+                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-argon-warning"></span> Duda / Rotación</span>
+              </div>
+              <span class="font-bold text-argon-dark">⭐ C = Capitán (x2 Puntos)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: MERCADO -->
+    <div id="view-mercado" class="tab-view">
+      <div class="space-y-6">
+        <div class="bg-white rounded-2xl shadow-argon p-5 border border-gray-100">
+          <h2 class="text-base font-extrabold text-argon-dark flex items-center gap-2"><span>🎯</span> Oportunidades & Subastas en Curso</h2>
+          <p class="text-xs text-argon-muted mt-0.5">Jugadores analizados con valor de mercado (VM) y puja sugerida.</p>
+        </div>
+        <div id="marketCardsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+      </div>
+    </div>
+
+    <!-- TAB 3: CARTERA -->
+    <div id="view-cartera" class="tab-view">
+      <div class="space-y-6">
+        <div class="bg-white rounded-2xl shadow-argon p-5 border border-gray-100">
+          <h2 class="text-base font-extrabold text-argon-dark flex items-center gap-2"><span>💼</span> Ventas Recomendadas</h2>
+          <p class="text-xs text-argon-muted mt-1">Protege tu presupuesto: jugadores a vender y por qué.</p>
+        </div>
+        <div id="stopLossContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Mobile bottom nav -->
+  <nav class="md:hidden fixed bottom-0 left-0 w-full bg-white shadow-argon-nav z-40 border-t border-gray-100 pb-safe">
+    <div class="flex justify-around items-center h-16">
+      <button onclick="switchTab('once')" id="navBtn-once" class="nav-button flex flex-col items-center justify-center w-full h-full text-argon-primary transition active:scale-90">
+        <span class="text-lg">⚽</span><span class="text-[10px] font-bold mt-0.5">Mi Once</span>
+      </button>
+      <button onclick="switchTab('mercado')" id="navBtn-mercado" class="nav-button flex flex-col items-center justify-center w-full h-full text-gray-400 hover:text-argon-primary transition active:scale-90">
+        <span class="text-lg">📈</span><span class="text-[10px] font-bold mt-0.5">Mercado</span>
+      </button>
+      <button onclick="switchTab('cartera')" id="navBtn-cartera" class="nav-button flex flex-col items-center justify-center w-full h-full text-gray-400 hover:text-argon-primary transition active:scale-90">
+        <span class="text-lg">💼</span><span class="text-[10px] font-bold mt-0.5">Cartera</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Settings modal -->
+  <div id="settingsModal" class="fixed inset-0 bg-black/60 z-50 hidden items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-argon w-full max-w-md overflow-hidden">
+      <div class="px-6 py-4 bg-gradient-argon text-white flex justify-between items-center">
+        <div>
+          <h3 class="font-extrabold text-base">Ajustes & Conectividad IA</h3>
+          <p class="text-white/80 text-[11px]">Elige motor, API Key privada y reglas</p>
+        </div>
+        <button onclick="toggleSettingsModal()" class="text-white/80 hover:text-white text-lg font-bold">✕</button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div>
+          <label class="block text-[11px] font-extrabold text-argon-muted uppercase tracking-wider mb-1.5">Motor de IA</label>
+          <select id="selectEngine" onchange="syncEngineFields()" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-xs font-bold text-argon-dark focus:outline-none focus:border-argon-primary">
+            <option value="gemini">Google Gemini (Flash/Pro)</option>
+            <option value="claude">Anthropic Claude (Sonnet)</option>
+          </select>
+        </div>
+        <div data-eng="gemini" class="space-y-4">
+          <div>
+            <label class="block text-[11px] font-extrabold text-argon-muted uppercase tracking-wider mb-1.5">Google Gemini API Key</label>
+            <input type="password" id="inputGeminiKey" placeholder="AIzaSy..." class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-xs text-argon-dark font-mono focus:outline-none focus:border-argon-primary">
+          </div>
+          <div>
+            <label class="block text-[11px] font-extrabold text-argon-muted uppercase tracking-wider mb-1.5">Modelo Gemini</label>
+            <select id="selectModel" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-xs font-bold text-argon-dark focus:outline-none focus:border-argon-primary">
+              <option value="gemini-2.5-flash">Gemini 2.5 Flash (rápido)</option>
+              <option value="gemini-2.5-pro">Gemini 2.5 Pro (máximo razonamiento)</option>
+            </select>
+          </div>
+          <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+            <div>
+              <p class="text-xs font-bold text-argon-dark">Google Search Grounding</p>
+              <p class="text-[10px] text-argon-muted">Contrasta lesiones y ruedas de prensa. Desactívalo para forzar el esquema JSON en el servidor.</p>
+            </div>
+            <input type="checkbox" id="toggleGrounding" class="w-5 h-5 shrink-0 ml-2 rounded border-gray-300 cursor-pointer">
+          </div>
+        </div>
+        <div data-eng="claude" class="hidden">
+          <label class="block text-[11px] font-extrabold text-argon-muted uppercase tracking-wider mb-1.5">Anthropic API Key</label>
+          <input type="password" id="inputClaudeKey" placeholder="sk-ant-..." class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-xs text-argon-dark font-mono focus:outline-none focus:border-argon-primary">
+        </div>
+        <p class="text-[10px] text-gray-400">Las claves se guardan solo en este dispositivo (<code>localStorage</code>) y se envían directamente al proveedor elegido.</p>
+        <div>
+          <label class="block text-[11px] font-extrabold text-argon-muted uppercase tracking-wider mb-1.5">Sistema de Puntuación de tu Liga</label>
+          <select id="selectScoring" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-xs font-bold text-argon-dark focus:outline-none focus:border-argon-primary">
+            <option value="mixta">Mixto (SofaScore + Cronista MARCA)</option>
+            <option value="sofascore">Solo SofaScore (Estadística pura)</option>
+            <option value="cronistas">Solo Cronistas MARCA (Picas / Estrellas)</option>
+          </select>
+        </div>
+      </div>
+      <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-2.5">
+        <button onclick="toggleSettingsModal()" class="px-4 py-2 text-xs font-bold text-gray-500 hover:text-gray-700">Cerrar</button>
+        <button onclick="saveAppSettings()" class="px-5 py-2 text-xs font-extrabold text-white bg-argon-primary hover:bg-[#4a5fcd] rounded-xl shadow-argon-sm transition">Guardar Ajustes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toastNotification" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-argon-dark text-white px-5 py-2.5 rounded-full shadow-argon text-xs font-bold opacity-0 pointer-events-none transition-all duration-300 flex items-center gap-2">
+    <span id="toastIcon">ℹ️</span>
+    <span id="toastMessage">Notificación</span>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

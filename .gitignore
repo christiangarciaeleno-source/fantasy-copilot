@@ -1,0 +1,9 @@
+.DS_Store
+*.log
+*.tmp
+*.bak
+.env
+.env.*
+*.key
+node_modules/
+.claude/

@@ -1,0 +1,70 @@
+/* Mobile-first safe areas & smooth display */
+:root {
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+}
+body {
+  background-color: #f8f9fe;
+  -webkit-tap-highlight-color: transparent;
+  padding-top: var(--sat);
+  padding-bottom: calc(var(--sab) + 72px);
+}
+@media (min-width: 768px) {
+  body { padding-bottom: 32px; }
+}
+.bg-gradient-argon {
+  background: linear-gradient(87deg, #5e72e4 0%, #825ee4 100%);
+}
+
+/* Tactical Soccer Pitch */
+.tactical-pitch {
+  background: radial-gradient(ellipse at center, #2dce89 0%, #1e8357 100%);
+  position: relative;
+  border: 3px solid rgba(255, 255, 255, 0.45);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: inset 0 0 45px rgba(0, 0, 0, 0.25);
+}
+.pitch-line-center {
+  position: absolute; top: 50%; left: 0; right: 0; height: 2px;
+  background: rgba(255, 255, 255, 0.4);
+  transform: translateY(-50%);
+}
+.pitch-circle-center {
+  position: absolute; top: 50%; left: 50%; width: 86px; height: 86px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+.pitch-box-top, .pitch-box-bottom {
+  position: absolute; left: 50%; width: 140px; height: 55px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  transform: translateX(-50%);
+}
+.pitch-box-top { top: 0; border-top: none; }
+.pitch-box-bottom { bottom: 0; border-bottom: none; }
+
+/* Tab animation */
+.tab-view { display: none; }
+.tab-view.active {
+  display: block;
+  animation: tabFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes tabFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Custom loader */
+.argon-spinner {
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top: 3px solid #ffffff;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
