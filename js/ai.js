@@ -1,7 +1,7 @@
 import { STATE } from './state.js';
 
 const GEMINI = 'https://generativelanguage.googleapis.com/v1beta';
-const TIMEOUT = 45000; // por intento: con mala cobertura el fetch no debe dejar el spinner colgado
+const TIMEOUT = 60000; // por intento: con mala cobertura el fetch no debe dejar el spinner colgado
 const DEADLINE = 100000; // tope total de un análisis, reintentos incluidos
 const FALLBACK = 'gemini-2.5-flash-lite'; // cuota propia y más holgada en la capa gratuita
 const RETRY = [429, 500, 502, 503, 504];
@@ -86,18 +86,27 @@ async function once(model, body, timeout) {
   return text;
 }
 
+// Un timeout se explica con lo que pasó en cada intento, para saber si falla la red, el modelo o el tamaño.
+const giveUp = (err, tries) => (err?.name === 'TimeoutError'
+  ? Object.assign(new Error(`Gemini no respondió a tiempo (${tries.join('; ')})`), { name: 'TimeoutError' })
+  : err);
+
 // Hasta 2 intentos con el modelo elegido y 2 con el de reserva, dentro de un tiempo máximo.
+// Tras un timeout no se repite con el mismo modelo: si no respondió en un minuto, repetir no lo arregla.
 async function gemini(body, timeout = TIMEOUT, deadline = DEADLINE) {
   const end = Date.now() + deadline;
+  const tries = [];
   let first, last;
   for (const [i, model] of [...new Set([STATE.model, FALLBACK])].entries()) {
     for (let t = 0; t < 2; t++) {
       if (i || t) { notify(i ? 'Probando otro modelo…' : 'Reintentando…'); await sleep(pace.wait); }
       const left = end - Date.now();
-      if (left < 8000) throw last;
+      if (left < 8000) throw giveUp(last, tries);
+      const t0 = Date.now();
       try {
         return await once(model, body, Math.min(timeout, left));
       } catch (err) {
+        tries.push(`${model.replace('gemini-', '')}: ${err.name === 'TimeoutError' ? `sin respuesta en ${Math.round((Date.now() - t0) / 1000)} s` : err.message}`);
         // Modelo retirado/no disponible: se busca el más reciente de la misma familia con la clave del usuario.
         if (err.status === 404 && !i && !t) {
           const latest = await latestModel('flash');
@@ -108,10 +117,17 @@ async function gemini(body, timeout = TIMEOUT, deadline = DEADLINE) {
         }
         if (!err.retry) throw i ? first : err;
         first ??= err; last = err;
+        if (err.name === 'TimeoutError') break;
       }
     }
   }
-  throw last;
+  throw giveUp(last, tries);
+}
+
+export async function ping() {
+  const t0 = Date.now();
+  await once(STATE.model, { contents: [{ parts: [{ text: 'Responde solo: OK' }] }] }, 20000);
+  return { model: STATE.model, ms: Date.now() - t0 };
 }
 
 // Cada entrada es una captura (inlineData) o texto copiado de la web del Fantasy.

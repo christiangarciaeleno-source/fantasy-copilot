@@ -53,6 +53,11 @@ assert.equal(urls.length, 1);
 mock((n) => { if (n === 1) throw new DOMException('timeout', 'TimeoutError'); return ok(DEMO); });
 assert.equal((await analyze()).once.length, 11);
 
+// Si no responde a tiempo no se repite con el mismo modelo: un intento por modelo y el mensaje lo explica.
+mock(() => { throw new DOMException('timeout', 'TimeoutError'); });
+await assert.rejects(analyze(), (e) => e.name === 'TimeoutError' && /no respondió a tiempo \(2\.5-flash: sin respuesta.*2\.5-flash-lite/.test(e.message));
+assert.equal(urls.length, 2);
+
 // Un once inválido se reintenta una vez con pista; JSON cortado también.
 mock((n) => ok(n === 1 ? { ...DEMO, once: [] } : DEMO));
 assert.equal((await analyze()).once.length, 11);

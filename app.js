@@ -1,6 +1,6 @@
 import { STATE, saveSettings, saveLast, loadLast } from './js/state.js';
 import { $, toast, haptic } from './js/util.js';
-import { analyze, validate, manualPrompt, importManual } from './js/ai.js';
+import { analyze, validate, manualPrompt, importManual, ping } from './js/ai.js';
 import { renderAll } from './js/render.js';
 import { DEMO } from './js/demo.js';
 import { exportSummary } from './js/export.js';
@@ -55,6 +55,19 @@ function saveAppSettings() {
   toast('Ajustes guardados correctamente', '✓');
 }
 
+async function testConnection() {
+  haptic(15);
+  STATE.geminiKey = $('inputGeminiKey').value.trim(); // se guarda al pulsar Guardar Ajustes
+  if (!STATE.geminiKey) return toast('Pega primero tu API Key de Gemini', '🔑');
+  toast('Probando conexión…', '📡');
+  try {
+    const r = await ping();
+    toast(`Conexión OK: ${r.model} respondió en ${(r.ms / 1000).toFixed(1)} s`, '✅');
+  } catch (err) {
+    toast(err.name === 'TimeoutError' ? 'Google no respondió en 20 s: revisa tu conexión' : `Fallo: ${err.message}`, '❌');
+  }
+}
+
 // --- Análisis ---
 function setLoading(on) {
   $('btnAnalyze').disabled = on;
@@ -86,7 +99,7 @@ async function runAnalysis() {
     }
     console.error('Fantasy AI Error:', err);
     toast(err.name === 'TimeoutError'
-      ? 'Gemini tardó demasiado: prueba con wifi, apaga la búsqueda en medios o usa el modo manual'
+      ? `${err.message}. Prueba con una sola entrada, wifi o el modo manual`
       : `Fallo: ${err.message}`, '❌');
   } finally {
     setLoading(false);
@@ -144,7 +157,7 @@ const dismissPWA = () => $('pwaInstallBanner').classList.add('hidden');
 
 // Los handlers inline (onclick) del HTML necesitan globals.
 Object.assign(window, {
-  switchTab, toggleSettingsModal, saveAppSettings, runAnalysis,
+  testConnection, switchTab, toggleSettingsModal, saveAppSettings, runAnalysis,
   loadCompleteDemo, copyManualPrompt, importManualJson, installPWA, dismissPWA, exportSummary, removeImage, pasteFromClipboard, pasteText, copyBookmarklet
 });
 

@@ -3,7 +3,7 @@ const get = (k, d = '') => { try { return localStorage.getItem(k) ?? d; } catch 
 
 export const STATE = {
   geminiKey: get('fc_gemini_key'),
-  model: get('fc_model', 'gemini-2.5-flash'),
+  model: /flash/.test(get('fc_model')) ? get('fc_model') : 'gemini-2.5-flash', // Pro (o un valor viejo) es lento y casi sin cuota gratis
   scoring: get('fc_scoring', 'mixta'),
   research: get('fc_search', 'false') === 'true', // desactivada por defecto: suma una llamada y más espera
   inputs: [], // capturas { mime, b64, url } (url = miniatura) o textos copiados { text }
