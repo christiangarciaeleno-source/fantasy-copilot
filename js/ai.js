@@ -56,14 +56,11 @@ async function latestModel(family) {
     .sort((a, b) => ver(b) - ver(a))[0] ?? null;
 }
 
-// Gemini no admite responseSchema junto a googleSearch: con grounding se confía en el prompt + extractJson.
 async function callGemini(img) {
   const body = {
     contents: [{ parts: [{ text: prompt() }, { inlineData: { mimeType: img.mime, data: img.b64 } }] }],
-    generationConfig: { temperature: 0.15 }
+    generationConfig: { temperature: 0.15, responseMimeType: 'application/json', responseSchema: SCHEMA }
   };
-  if (STATE.grounding) body.tools = [{ googleSearch: {} }];
-  else Object.assign(body.generationConfig, { responseMimeType: 'application/json', responseSchema: SCHEMA });
 
   const post = (model) => fetch(`${GEMINI}/models/${model}:generateContent`, {
     method: 'POST',

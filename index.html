@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
-  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="tailwind.js"></script>
   <script src="tw-config.js"></script>
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -249,13 +249,6 @@
               <option value="gemini-2.5-flash">Gemini 2.5 Flash (rápido)</option>
               <option value="gemini-2.5-pro">Gemini 2.5 Pro (máximo razonamiento)</option>
             </select>
-          </div>
-          <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
-            <div>
-              <p class="text-xs font-bold text-argon-dark">Google Search Grounding</p>
-              <p class="text-[10px] text-argon-muted">Contrasta lesiones y ruedas de prensa. Desactívalo para forzar el esquema JSON en el servidor.</p>
-            </div>
-            <input type="checkbox" id="toggleGrounding" class="w-5 h-5 shrink-0 ml-2 rounded border-gray-300 cursor-pointer">
           </div>
         </div>
         <div data-eng="claude" class="hidden">

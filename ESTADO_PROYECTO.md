@@ -34,14 +34,13 @@ Regla: ningún archivo supera 300 líneas (máximo actual: `index.html`, 291).
 - GitHub Pages: activo, fuente `main` / `/`, último build `built`
 - URL pública: **https://christiangarciaeleno-source.github.io/fantasy-copilot/**
 - Despliegue: automático en cada `git push` a `main`.
-- Al cambiar cualquier asset, subir `CACHE` en `sw.js` (`fantasy-pro-v3`) para invalidar la caché.
+- Al cambiar cualquier asset, subir `CACHE` en `sw.js` (nombre actual en `sw.js`) para invalidar la caché.
 
 ## 3. Pendiente / no verificado
 
 - Gemini responde desde el Pixel; falta una llamada completa con éxito (la clave probada dio "prepayment credits depleted", problema de facturación de Google). Claude sin probar.
 - Service Worker sin verificar en Chrome real (el navegador integrado no lo registró).
-- Icono solo SVG: si Chrome Android no ofrece instalar, añadir PNG 192/512.
-- Grounding de Gemini desactivado por defecto: con grounding no se puede forzar el esquema JSON.
+- Grounding eliminado: gastaba más cuota y no permitía forzar el esquema JSON.
 
 - Seguridad: las claves viven en `localStorage` del origen `*.github.io`; no alojar otras páginas de la cuenta que no sean de confianza.
 

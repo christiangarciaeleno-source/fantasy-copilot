@@ -1,4 +1,5 @@
-const get = (k, d = '') => localStorage.getItem(k) ?? d;
+// Modo privado / almacenamiento bloqueado: getItem puede lanzar; se usa el valor por defecto.
+const get = (k, d = '') => { try { return localStorage.getItem(k) ?? d; } catch { return d; } };
 
 export const STATE = {
   engine: get('fc_engine', 'gemini'),
@@ -6,7 +7,6 @@ export const STATE = {
   claudeKey: get('fc_claude_key'),
   model: get('fc_model', 'gemini-2.5-flash'),
   scoring: get('fc_scoring', 'mixta'),
-  grounding: get('fc_grounding', 'false') === 'true',
   image: null, // { mime, b64 }
   deferredPrompt: null,
   data: null // último análisis: { saldo, once, ventas_recomendadas, compras_mercado }
@@ -18,7 +18,6 @@ export function saveSettings() {
   localStorage.setItem('fc_claude_key', STATE.claudeKey);
   localStorage.setItem('fc_model', STATE.model);
   localStorage.setItem('fc_scoring', STATE.scoring);
-  localStorage.setItem('fc_grounding', STATE.grounding);
 }
 
 export function saveLast(data) {
