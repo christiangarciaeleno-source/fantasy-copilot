@@ -58,3 +58,4 @@ Regla: ningún archivo supera 300 líneas (máximo actual: `index.html`, 291).
 
 - Decisión: solo Gemini (capa gratuita); se eliminó el motor Claude por ser de pago.
 - CSS: `app.css` se genera con `./build-css.sh` (Tailwind CLI 3.4.17 + `styles.css`); regenerarlo si se añaden clases nuevas en `index.html` o `js/`. Ya no se compila Tailwind en el móvil.
+- Modo manual (sin API): botón "Copiar prompt" + pegar el JSON de Gemini/Claude chat y "Importar respuesta". La búsqueda en medios pasa a desactivada por defecto (clave `fc_search`) y con tope de 30 s.

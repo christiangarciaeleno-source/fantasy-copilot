@@ -1,7 +1,7 @@
 // Ejecutar: node test.mjs
 import assert from 'node:assert/strict';
 globalThis.localStorage = { getItem: () => null, setItem() {} };
-const { extractJson, validate, apiError, analyze } = await import('./js/ai.js');
+const { extractJson, validate, apiError, analyze, manualPrompt, importManual } = await import('./js/ai.js');
 const { STATE } = await import('./js/state.js');
 const { buildSummary } = await import('./js/export.js');
 const { money } = await import('./js/util.js');
@@ -39,4 +39,8 @@ assert.equal(bodies.length, 2);
 assert.ok(bodies[0].tools?.[0].googleSearch && !bodies[1].tools);
 globalThis.fetch = async (_, o) => (JSON.parse(o.body).tools ? { ok: false, status: 500, json: async () => ({}) } : reply(DEMO));
 assert.equal((await analyze()).once.length, 11);
+// Modo manual: el prompt pide JSON y se importa tal cual lo devuelve un chat (con ```json y texto alrededor).
+assert.match(manualPrompt(), /Responde SOLO con un JSON/);
+assert.equal(importManual('Aquí tienes:\n```json\n' + JSON.stringify(DEMO) + '\n```').once.length, 11);
+assert.throws(() => importManual('no es json'), /JSON/);
 console.log('OK');

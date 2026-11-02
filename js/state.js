@@ -5,7 +5,7 @@ export const STATE = {
   geminiKey: get('fc_gemini_key'),
   model: get('fc_model', 'gemini-2.5-flash'),
   scoring: get('fc_scoring', 'mixta'),
-  research: get('fc_research', 'true') === 'true',
+  research: get('fc_search', 'false') === 'true', // desactivada por defecto: suma una llamada y más espera
   image: null, // { mime, b64 }
   deferredPrompt: null,
   data: null // último análisis: { saldo, once, ventas_recomendadas, compras_mercado }
@@ -15,7 +15,7 @@ export function saveSettings() {
   localStorage.setItem('fc_gemini_key', STATE.geminiKey);
   localStorage.setItem('fc_model', STATE.model);
   localStorage.setItem('fc_scoring', STATE.scoring);
-  localStorage.setItem('fc_research', STATE.research);
+  localStorage.setItem('fc_search', STATE.research);
 }
 
 export function saveLast(data) {

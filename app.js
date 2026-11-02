@@ -1,6 +1,6 @@
 import { STATE, saveSettings, saveLast, loadLast } from './js/state.js';
 import { $, toast, haptic } from './js/util.js';
-import { analyze, validate } from './js/ai.js';
+import { analyze, validate, manualPrompt, importManual } from './js/ai.js';
 import { renderAll } from './js/render.js';
 import { DEMO } from './js/demo.js';
 import { exportSummary } from './js/export.js';
@@ -84,9 +84,33 @@ async function runAnalysis() {
       return toast('Introduce la API Key del motor elegido en Ajustes', '🔑');
     }
     console.error('Fantasy AI Error:', err);
-    toast(`Fallo: ${err.message}`, '❌');
+    toast(err.name === 'TimeoutError'
+      ? 'Gemini tardó demasiado: prueba con wifi, apaga la búsqueda en medios o usa el modo manual'
+      : `Fallo: ${err.message}`, '❌');
   } finally {
     setLoading(false);
+  }
+}
+
+// --- Modo manual (sin API) ---
+async function copyManualPrompt() {
+  haptic(15);
+  try {
+    await navigator.clipboard.writeText(manualPrompt());
+    toast('Prompt copiado: pégalo en Gemini o Claude junto a tu captura', '📋');
+  } catch {
+    toast('No se pudo acceder al portapapeles', '🔒');
+  }
+}
+
+function importManualJson() {
+  haptic(25);
+  try {
+    show(importManual($('manualJson').value));
+    $('manualJson').value = '';
+    toast('Respuesta importada', '⚽');
+  } catch (err) {
+    toast(`No se pudo importar: ${err.message}`, '❌');
   }
 }
 
@@ -120,7 +144,7 @@ const dismissPWA = () => $('pwaInstallBanner').classList.add('hidden');
 // Los handlers inline (onclick) del HTML necesitan globals.
 Object.assign(window, {
   switchTab, toggleSettingsModal, saveAppSettings, runAnalysis,
-  loadCompleteDemo, installPWA, dismissPWA, exportSummary, removeImage, pasteFromClipboard
+  loadCompleteDemo, copyManualPrompt, importManualJson, installPWA, dismissPWA, exportSummary, removeImage, pasteFromClipboard
 });
 
 // --- Arranque ---

@@ -124,6 +124,17 @@
           <button onclick="loadCompleteDemo()" class="w-full text-center text-[11px] font-bold text-argon-primary hover:underline py-1">
             ⚡ Cargar Demo Completa (Sin API Key)
           </button>
+          <details class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3">
+            <summary class="text-[11px] font-extrabold text-argon-dark cursor-pointer">Modo manual (sin API Key ni cuotas)</summary>
+            <ol class="text-[10px] text-argon-muted mt-2 space-y-1 list-decimal pl-4">
+              <li>Pulsa "Copiar prompt".</li>
+              <li>Abre gemini.google.com (o claude.ai), sube tu captura y pega el prompt.</li>
+              <li>Copia el JSON que responda y pégalo aquí abajo.</li>
+            </ol>
+            <button onclick="copyManualPrompt()" class="w-full mt-2 bg-white hover:bg-gray-100 active:scale-95 text-argon-dark font-bold py-2 rounded-xl text-xs border border-gray-200 transition">📋 Copiar prompt</button>
+            <textarea id="manualJson" rows="4" placeholder='Pega aquí el JSON de la IA...' class="w-full mt-2 bg-white border border-gray-200 rounded-xl px-3 py-2 text-[11px] font-mono text-argon-dark focus:outline-none focus:border-argon-primary"></textarea>
+            <button onclick="importManualJson()" class="w-full mt-2 bg-argon-primary hover:bg-[#4a5fcd] active:scale-95 text-white font-bold py-2 rounded-xl text-xs transition">⬇️ Importar respuesta</button>
+          </details>
         </div>
       </div>
     </div>

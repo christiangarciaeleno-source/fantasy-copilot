@@ -59,12 +59,12 @@ async function latestModel(family) {
     .sort((a, b) => ver(b) - ver(a))[0] ?? null;
 }
 
-async function gemini(body) {
+async function gemini(body, timeout = TIMEOUT) {
   const post = (model) => fetch(`${GEMINI}/models/${model}:generateContent`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': STATE.geminiKey },
     body: JSON.stringify(body),
-    signal: AbortSignal.timeout(TIMEOUT)
+    signal: AbortSignal.timeout(timeout)
   });
   let res = await post(STATE.model);
   // Modelo retirado/no disponible: se busca el más reciente de la misma familia con la clave del usuario.
@@ -87,10 +87,21 @@ const callGemini = async (img, report) => extractJson(await gemini({
   generationConfig: { temperature: 0.15, responseMimeType: 'application/json', responseSchema: SCHEMA }
 }));
 
+// La búsqueda es opcional: con tope corto para no sumar un minuto de espera si Google va lento.
 const researchGemini = (img) => gemini({
   contents: [{ parts: geminiParts(img, RESEARCH) }],
   tools: [{ googleSearch: {} }]
-});
+}, 30000);
+
+// Modo manual: el usuario pega el prompt en un chat gratuito (Gemini, Claude...) y trae el JSON de vuelta.
+const SHAPE = '{"saldo":-1850000,"once":[{"dorsal":1,"nombre":"","posicion":"POR","equipo":"","titularidad_pct":90,"xp":5.5}],"ventas_recomendadas":[{"nombre":"","vm":0,"motivo":""}],"compras_mercado":[{"nombre":"","vm":0,"puja_sugerida":0,"tipo":"especulacion"}]}';
+
+export const manualPrompt = () => `${prompt()}
+Antes de responder, busca en la web (Sofascore, Marca, AS, Transfermarkt) lesiones, sancionados, alineaciones probables y forma reciente de los jugadores de la captura, y úsalo.
+Responde SOLO con un JSON válido, sin texto extra ni explicaciones, con esta forma (once = 11 jugadores; posicion: POR, DEF, MED o DEL; tipo: especulacion, chollo o burbuja):
+${SHAPE}`;
+
+export const importManual = (text) => validate(extractJson(text));
 
 export function extractJson(text) {
   const m = text.replace(/```json|```/g, '').match(/\{[\s\S]*\}/);
