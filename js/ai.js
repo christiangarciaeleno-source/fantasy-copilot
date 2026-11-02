@@ -34,6 +34,16 @@ Reglas: todos los importes (saldo, vm, puja_sugerida) en euros como número ente
 "compras_mercado": fichajes del mercado visible con puja sugerida; vacío si no se ve el mercado.
 Si un dato no aparece en la captura, estímalo con criterio y mantén listas vacías en lugar de inventar jugadores.`;
 
+// Mensajes cortos en español para los fallos que el usuario puede arreglar; el resto, el texto de la API.
+export function apiError(status, apiMsg, name) {
+  const msg = {
+    429: `Cuota de ${name} agotada: espera un minuto, usa el modelo Flash o cambia de motor en Ajustes`,
+    401: `API Key de ${name} no válida: revísala en Ajustes`,
+    403: `API Key de ${name} sin permiso: revísala en Ajustes`
+  }[status] ?? (status >= 500 ? `${name} no responde (HTTP ${status}): reintenta en un momento` : null);
+  return new Error(msg || apiMsg || `Error en la API de ${name} (HTTP ${status})`);
+}
+
 async function latestModel(family) {
   const res = await fetch(`${GEMINI}/models?pageSize=200`, { headers: { 'x-goog-api-key': STATE.geminiKey } });
   if (!res.ok) return null;
@@ -68,7 +78,7 @@ async function callGemini(img) {
     if (model) { STATE.model = model; localStorage.setItem('fc_model', model); res = await post(model); }
   }
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error?.message || `Error en la API de Gemini (HTTP ${res.status})`);
+  if (!res.ok) throw apiError(res.status, data.error?.message, 'Gemini');
   const text = data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? '').join('');
   if (!text) throw new Error('La respuesta de Gemini llegó vacía');
   return extractJson(text);
@@ -98,7 +108,7 @@ async function callClaude(img) {
     signal: AbortSignal.timeout(TIMEOUT)
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error?.message || `Error en la API de Claude (HTTP ${res.status})`);
+  if (!res.ok) throw apiError(res.status, data.error?.message, 'Claude');
   const call = data.content?.find((b) => b.type === 'tool_use');
   if (!call) throw new Error('Claude no devolvió datos estructurados');
   return call.input;
