@@ -240,16 +240,22 @@
       <div class="px-6 py-4 bg-gradient-argon text-white flex justify-between items-center">
         <div>
           <h3 class="font-extrabold text-base">Ajustes & Conectividad IA</h3>
-          <p class="text-white/80 text-[11px]">API Key de Gemini y reglas</p>
+          <p class="text-white/80 text-[11px]">Motor, API Key y reglas</p>
         </div>
         <button onclick="toggleSettingsModal()" class="text-white/80 hover:text-white text-lg font-bold">✕</button>
       </div>
       <div class="p-6 space-y-4">
-        <div class="space-y-4">
+        <div>
+          <label class="block text-[11px] font-extrabold text-argon-muted uppercase tracking-wider mb-1.5">Motor de IA (ambos con capa gratuita)</label>
+          <select id="selectEngine" onchange="syncEngineFields()" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-xs font-bold text-argon-dark focus:outline-none focus:border-argon-primary">
+            <option value="gemini">Google Gemini</option>
+            <option value="openrouter">OpenRouter (modelos gratuitos)</option>
+          </select>
+        </div>
+        <div data-eng="gemini" class="space-y-4">
           <div>
             <label class="block text-[11px] font-extrabold text-argon-muted uppercase tracking-wider mb-1.5">Google Gemini API Key</label>
             <input type="password" id="inputGeminiKey" placeholder="AIzaSy..." class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-xs text-argon-dark font-mono focus:outline-none focus:border-argon-primary">
-            <button onclick="testConnection()" class="w-full mt-2 bg-white hover:bg-gray-100 active:scale-95 text-argon-dark font-bold py-2 rounded-xl text-xs border border-gray-200 transition">📡 Probar conexión</button>
           </div>
           <div>
             <label class="block text-[11px] font-extrabold text-argon-muted uppercase tracking-wider mb-1.5">Modelo Gemini</label>
@@ -258,7 +264,13 @@
             </select>
           </div>
         </div>
-        <p class="text-[10px] text-gray-400">La clave se guarda solo en este dispositivo (<code>localStorage</code>) y se envía directamente a Google.</p>
+        <div data-eng="openrouter" class="hidden">
+          <label class="block text-[11px] font-extrabold text-argon-muted uppercase tracking-wider mb-1.5">OpenRouter API Key</label>
+          <input type="password" id="inputOrKey" placeholder="sk-or-..." class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-xs text-argon-dark font-mono focus:outline-none focus:border-argon-primary">
+          <p class="text-[10px] text-argon-muted mt-1.5">Gratis y sin tarjeta en openrouter.ai/keys (unas 50 peticiones al día). Activa los endpoints gratuitos en openrouter.ai/settings/privacy. Los modelos gratuitos pueden registrar lo que envías.</p>
+        </div>
+        <button onclick="testConnection()" class="w-full bg-white hover:bg-gray-100 active:scale-95 text-argon-dark font-bold py-2 rounded-xl text-xs border border-gray-200 transition">📡 Probar conexión</button>
+        <p class="text-[10px] text-gray-400">La clave se guarda solo en este dispositivo (<code>localStorage</code>) y se envía directamente al proveedor elegido.</p>
         <div>
           <label class="block text-[11px] font-extrabold text-argon-muted uppercase tracking-wider mb-1.5">Sistema de Puntuación de tu Liga</label>
           <select id="selectScoring" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-xs font-bold text-argon-dark focus:outline-none focus:border-argon-primary">

@@ -1,8 +1,8 @@
 // Subir CACHE al cambiar cualquier asset para invalidar la caché anterior.
-const CACHE = 'fantasy-pro-v17';
+const CACHE = 'fantasy-pro-v18';
 const PRECACHE = [
   './', 'index.html', 'app.css', 'app.js', 'manifest.json', 'icon.svg', 'icon-192.png', 'icon-512.png',
-  'js/util.js', 'js/state.js', 'js/ai.js', 'js/render.js', 'js/demo.js', 'js/export.js', 'js/image.js', 'js/bookmarklet.js'
+  'js/util.js', 'js/state.js', 'js/ai.js', 'js/render.js', 'js/demo.js', 'js/export.js', 'js/image.js', 'js/bookmarklet.js', 'js/openrouter.js'
 ];
 
 // reload: salta la caché HTTP de Pages (max-age 600) al precachear.
@@ -21,7 +21,7 @@ self.addEventListener('activate', (e) => {
 // Stale-while-revalidate para GET (assets propios + Tailwind/fuentes CDN). Las llamadas a las APIs de IA son POST: no pasan por aquí.
 self.addEventListener('fetch', (e) => {
   const { origin, hostname } = new URL(e.request.url);
-  if (e.request.method !== 'GET' || (origin !== location.origin && hostname.endsWith('googleapis.com'))) return; // ListModels no se cachea
+  if (e.request.method !== 'GET' || (origin !== location.origin && (hostname.endsWith('googleapis.com') || hostname === 'openrouter.ai'))) return; // listas de modelos: siempre frescas
   e.respondWith(
     caches.open(CACHE).then(async (cache) => {
       const hit = await cache.match(e.request);

@@ -2,6 +2,8 @@
 const get = (k, d = '') => { try { return localStorage.getItem(k) ?? d; } catch { return d; } };
 
 export const STATE = {
+  engine: get('fc_engine') === 'openrouter' ? 'openrouter' : 'gemini',
+  orKey: get('fc_or_key'),
   geminiKey: get('fc_gemini_key'),
   model: /flash/.test(get('fc_model')) ? get('fc_model') : 'gemini-2.5-flash', // Pro (o un valor viejo) es lento y casi sin cuota gratis
   scoring: get('fc_scoring', 'mixta'),
@@ -11,6 +13,8 @@ export const STATE = {
 };
 
 export function saveSettings() {
+  localStorage.setItem('fc_engine', STATE.engine);
+  localStorage.setItem('fc_or_key', STATE.orKey);
   localStorage.setItem('fc_gemini_key', STATE.geminiKey);
   localStorage.setItem('fc_model', STATE.model);
   localStorage.setItem('fc_scoring', STATE.scoring);

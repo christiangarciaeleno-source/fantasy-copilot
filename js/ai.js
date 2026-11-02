@@ -1,4 +1,8 @@
 import { STATE } from './state.js';
+import { apiError } from './util.js';
+import { openrouterText, openrouterPing } from './openrouter.js';
+
+export { apiError };
 
 const GEMINI = 'https://generativelanguage.googleapis.com/v1beta';
 const TIMEOUT = 60000; // por intento: con mala cobertura el fetch no debe dejar el spinner colgado
@@ -42,16 +46,6 @@ Reglas: todos los importes (saldo, vm, puja_sugerida) en euros como número ente
 titularidad_pct va de 0 a 100 y xp son los puntos esperados de la jornada.
 Si un dato no aparece en las entradas, estímalo con criterio y mantén listas vacías en lugar de inventar jugadores.${hint && `
 ATENCIÓN: ${hint}`}`;
-
-// Mensajes cortos en español para los fallos que el usuario puede arreglar; el resto, el texto de la API.
-export function apiError(status, apiMsg, name) {
-  const msg = {
-    429: `Cuota de ${name} agotada: espera un minuto y reintenta, o usa el modo manual`,
-    401: `API Key de ${name} no válida: revísala en Ajustes`,
-    403: `API Key de ${name} sin permiso: revísala en Ajustes`
-  }[status] ?? (status >= 500 ? `${name} no responde (HTTP ${status}): reintenta en un momento` : null);
-  return new Error(msg || apiMsg || `Error en la API de ${name} (HTTP ${status})`);
-}
 
 async function latestModel(family) {
   const res = await fetch(`${GEMINI}/models?pageSize=200`, { headers: { 'x-goog-api-key': STATE.geminiKey } });
@@ -124,6 +118,7 @@ async function gemini(body, deadline = DEADLINE) {
 
 export async function ping() {
   const t0 = Date.now();
+  if (STATE.engine === 'openrouter') return { model: await openrouterPing(), ms: Date.now() - t0 };
   await once(STATE.model, { contents: [{ parts: [{ text: 'Responde solo: OK' }] }] }, 20000).catch((e) => { throw giveUp(e, []); });
   return { model: STATE.model, ms: Date.now() - t0 };
 }
@@ -141,10 +136,12 @@ const callGemini = async (inputs, hint) => extractJson(await gemini({
 // Modo manual: el usuario pega el prompt (con sus capturas) en un chat gratuito (Gemini, Claude...) y trae el JSON de vuelta.
 const SHAPE = '{"saldo":-1850000,"resumen":"","once":[{"dorsal":1,"nombre":"","posicion":"POR","equipo":"","titularidad_pct":90,"xp":5.5}],"ventas_recomendadas":[{"nombre":"","vm":0,"motivo":""}],"compras_mercado":[{"nombre":"","vm":0,"puja_sugerida":0,"tipo":"especulacion"}]}';
 
-export const manualPrompt = () => `${prompt()}
-Antes de responder, busca en la web (Sofascore, Marca, AS, Transfermarkt) lesiones, sancionados, alineaciones probables y forma reciente de los jugadores de la captura, y úsalo.
+// Para quien no tiene esquema forzado (chat manual, OpenRouter): se pide el JSON en el propio prompt.
+const jsonPrompt = (hint, extra = '') => `${prompt(hint)}${extra}
 Responde SOLO con un JSON válido, sin texto extra ni explicaciones, con esta forma (once = 11 jugadores; posicion: POR, DEF, MED o DEL; tipo: especulacion, chollo o burbuja):
 ${SHAPE}`;
+
+export const manualPrompt = () => jsonPrompt('', '\nAntes de responder, busca en la web (Sofascore, Marca, AS, Transfermarkt) lesiones, sancionados, alineaciones probables y forma reciente de los jugadores de la captura, y úsalo.');
 
 export const importManual = (text) => validate(extractJson(text));
 
@@ -177,15 +174,19 @@ export function validate(r) {
 
 const HINT = 'tu respuesta anterior no era válida. Devuelve SOLO el JSON, con EXACTAMENTE 11 jugadores en "once" y posicion POR, DEF, MED o DEL.';
 
+const call = async (inputs, hint) => (STATE.engine === 'openrouter'
+  ? extractJson(await openrouterText(inputs, jsonPrompt(hint), notify))
+  : callGemini(inputs, hint));
+
 export async function analyze(status = () => {}) {
-  if (!STATE.geminiKey) throw Object.assign(new Error('Falta la API Key'), { code: 'NOKEY' });
+  if (!(STATE.engine === 'openrouter' ? STATE.orKey : STATE.geminiKey)) throw Object.assign(new Error('Falta la API Key'), { code: 'NOKEY' });
   notify = status;
   status('Analizando…');
   try {
-    return validate(await callGemini(STATE.inputs));
+    return validate(await call(STATE.inputs));
   } catch (err) {
     if (!/jugadores válidos|extraer el JSON/.test(err.message)) throw err;
     status('Reintentando…');
-    return validate(await callGemini(STATE.inputs, HINT)); // la IA a veces falla el formato: un reintento con pista
+    return validate(await call(STATE.inputs, HINT)); // la IA a veces falla el formato: un reintento con pista
   }
 }

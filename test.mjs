@@ -25,8 +25,8 @@ pace.wait = 0;
 Object.assign(STATE, { geminiKey: 'k', model: 'gemini-2.5-flash', inputs: [{ mime: 'image/jpeg', b64: 'x' }, { mime: 'image/jpeg', b64: 'y' }, { text: 'Plantilla: Lamine Yamal 9,4' }] });
 const ok = (obj) => ({ ok: true, json: async () => ({ candidates: [{ content: { parts: [{ text: JSON.stringify(obj) }] } }] }) });
 const fail = (status) => ({ ok: false, status, json: async () => ({}) });
-let urls = [], bodies = [];
-const mock = (fn) => { urls = []; bodies = []; globalThis.fetch = async (url, o) => { urls.push(url); bodies.push(o.body ? JSON.parse(o.body) : null); return fn(urls.length); }; };
+let urls = [], bodies = [], heads = [];
+const mock = (fn) => { urls = []; bodies = []; heads = []; globalThis.fetch = async (url, o) => { heads.push(o?.headers); urls.push(url); bodies.push(o.body ? JSON.parse(o.body) : null); return fn(urls.length); }; };
 
 // Todas las capturas viajan en una sola llamada, y 2.5 Flash va sin "thinking".
 mock(() => ok(DEMO));
@@ -94,6 +94,41 @@ assert.equal(validate({ ...DEMO, once: DEMO.once.map((p) => ({ ...p, titularidad
 // El texto pegado se limpia de emails antes de ir a Google.
 const { cleanText } = await import('./js/image.js');
 assert.equal(cleanText('  Hola pepe.perez+fantasy@gmail.com, tu plantilla '), 'Hola [email], tu plantilla');
+
+// --- OpenRouter: segundo motor gratuito ---
+Object.assign(STATE, { engine: 'openrouter', orKey: 'sk-or-k', inputs: [{ mime: 'image/jpeg', b64: 'x', url: 'data:image/jpeg;base64,x' }, { text: 'Plantilla: Lamine Yamal 9,4' }] });
+const vl = (id, mods = ['text', 'image']) => ({ id, architecture: { input_modalities: mods } });
+const catalog = { data: [vl('x/seguridad-safety:free'), vl('nvidia/nemotron-3.5-super-vl:free'), vl('foo/solo-texto:free', ['text']), vl('google/gemma-4-31b-it:free'), vl('foo/de-pago', ['image'])] };
+const orOk = (obj) => ({ ok: true, json: async () => ({ choices: [{ message: { content: 'Aquí va:\n```json\n' + JSON.stringify(obj) + '\n```' } }] }) });
+const chat = (n) => /chat\/completions/.test(urls[n - 1]);
+const route = (fn) => mock((n) => (chat(n) ? fn(n) : { ok: true, json: async () => catalog }));
+
+route(() => orOk(DEMO));
+assert.equal((await analyze()).once.length, 11);
+const sent = bodies.find((b) => b?.messages);
+assert.equal(sent.model, 'google/gemma-4-31b-it:free'); // Gemma primero; sin modelos de seguridad, de solo texto ni de pago
+assert.equal(heads.at(-1).Authorization, 'Bearer sk-or-k');
+assert.deepEqual(sent.messages[0].content.slice(1).map((p) => p.type), ['image_url', 'text']);
+assert.equal(sent.messages[0].content[1].image_url.url, 'data:image/jpeg;base64,x');
+assert.match(sent.messages[0].content[0].text, /Responde SOLO con un JSON/);
+
+// Un modelo con cuota agotada o caído pasa al siguiente; una clave mala no.
+let tries = [];
+route((n) => { tries.push(bodies[n - 1].model); return tries.length === 1 ? fail(429) : orOk(DEMO); });
+assert.equal((await analyze()).once.length, 11);
+assert.deepEqual(tries, ['google/gemma-4-31b-it:free', 'nvidia/nemotron-3.5-super-vl:free']);
+route(() => fail(401));
+await assert.rejects(analyze(), /API Key de OpenRouter no válida/);
+assert.equal(urls.filter((u) => /chat/.test(u)).length, 1);
+route(() => ({ ok: false, status: 404, json: async () => ({ error: { message: 'No endpoints found matching your data policy' } }) }));
+await assert.rejects(analyze(), /openrouter\.ai\/settings\/privacy/);
+mock((n) => { if (chat(n)) throw new DOMException('timeout', 'TimeoutError'); return { ok: true, json: async () => catalog }; });
+await assert.rejects(analyze(), (e) => e.name === 'TimeoutError' && /OpenRouter no respondió/.test(e.message));
+globalThis.fetch = async () => { throw new TypeError('Failed to fetch'); }; // sin lista de modelos: usa los de reserva
+await assert.rejects(analyze(), /Sin conexión con OpenRouter/);
+STATE.orKey = '';
+await assert.rejects(analyze(), (e) => e.code === 'NOKEY');
+Object.assign(STATE, { engine: 'gemini', orKey: 'sk-or-k' });
 
 // Modo manual: el prompt pide JSON y se importa tal cual lo devuelve un chat (con ```json y texto alrededor).
 assert.match(manualPrompt(), /Responde SOLO con un JSON/);

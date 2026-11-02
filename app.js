@@ -33,7 +33,15 @@ function toggleSettingsModal() {
   $('settingsModal').classList.toggle('flex');
 }
 
+function syncEngineFields() {
+  const engine = $('selectEngine').value;
+  document.querySelectorAll('[data-eng]').forEach((el) => el.classList.toggle('hidden', el.dataset.eng !== engine));
+}
+
 function loadSettingsForm() {
+  $('selectEngine').value = STATE.engine;
+  $('inputOrKey').value = STATE.orKey;
+  syncEngineFields();
   $('inputGeminiKey').value = STATE.geminiKey;
   const sel = $('selectModel');
   // El fallback puede haber guardado un modelo que no está en la lista: se añade para no guardar ''.
@@ -44,6 +52,8 @@ function loadSettingsForm() {
 
 function saveAppSettings() {
   Object.assign(STATE, {
+    engine: $('selectEngine').value,
+    orKey: $('inputOrKey').value.trim(),
     geminiKey: $('inputGeminiKey').value.trim(),
     model: $('selectModel').value,
     scoring: $('selectScoring').value
@@ -55,14 +65,15 @@ function saveAppSettings() {
 
 async function testConnection() {
   haptic(15);
-  STATE.geminiKey = $('inputGeminiKey').value.trim(); // se guarda al pulsar Guardar Ajustes
-  if (!STATE.geminiKey) return toast('Pega primero tu API Key de Gemini', '🔑');
+  // Se guardan al pulsar Guardar Ajustes.
+  Object.assign(STATE, { engine: $('selectEngine').value, orKey: $('inputOrKey').value.trim(), geminiKey: $('inputGeminiKey').value.trim() });
+  if (!(STATE.engine === 'openrouter' ? STATE.orKey : STATE.geminiKey)) return toast('Pega primero tu API Key del motor elegido', '🔑');
   toast('Probando conexión…', '📡');
   try {
     const r = await ping();
     toast(`Conexión OK: ${r.model} respondió en ${(r.ms / 1000).toFixed(1)} s`, '✅');
   } catch (err) {
-    toast(err.name === 'TimeoutError' ? 'Google no respondió en 20 s: revisa tu conexión' : `Fallo: ${err.message}`, '❌');
+    toast(err.name === 'TimeoutError' ? 'El proveedor no respondió a tiempo: revisa tu conexión' : `Fallo: ${err.message}`, '❌');
   }
 }
 
@@ -93,7 +104,7 @@ async function runAnalysis() {
   } catch (err) {
     if (err.code === 'NOKEY') {
       toggleSettingsModal();
-      return toast('Introduce tu API Key de Gemini en Ajustes', '🔑');
+      return toast('Introduce la API Key del motor elegido en Ajustes', '🔑');
     }
     console.error('Fantasy AI Error:', err);
     toast(err.name === 'TimeoutError'
@@ -155,7 +166,7 @@ const dismissPWA = () => $('pwaInstallBanner').classList.add('hidden');
 
 // Los handlers inline (onclick) del HTML necesitan globals.
 Object.assign(window, {
-  testConnection, switchTab, toggleSettingsModal, saveAppSettings, runAnalysis,
+  testConnection, syncEngineFields, switchTab, toggleSettingsModal, saveAppSettings, runAnalysis,
   loadCompleteDemo, copyManualPrompt, importManualJson, installPWA, dismissPWA, exportSummary, removeImage, pasteFromClipboard, pasteText, copyBookmarklet
 });
 
