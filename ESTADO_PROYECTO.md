@@ -11,7 +11,7 @@
 ├── sw.js                            37   Service Worker (precache + stale-while-revalidate)
 ├── manifest.json                    13   standalone, portrait, #5e72e4
 ├── styles.css                       70
-├── tailwind.config.js                     20   Tema Tailwind (CDN)
+├── tailwind.config.js                     20   Tema Tailwind (para build-css.sh)
 ├── icon.svg                          1
 ├── js/
 │   ├── ai.js                       127   Motor Gemini (búsqueda + análisis) + esquema JSON
