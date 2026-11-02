@@ -3,6 +3,7 @@ const j = (dorsal, nombre, posicion, equipo, titularidad_pct, xp) =>
 
 export const DEMO = {
   saldo: -1850000,
+  resumen: 'Tu once actual es sólido arriba, pero Griezmann es duda: se sube a Lamine y Vinícius y se vende a Brahim para saldar la deuda.',
   once: [
     j(1, 'Mamardashvili', 'POR', 'VAL', 95, 6.9),
     j(23, 'Koundé', 'DEF', 'FCB', 90, 6.8), j(2, 'Rüdiger', 'DEF', 'RMA', 85, 6.5),

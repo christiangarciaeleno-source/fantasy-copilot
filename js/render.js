@@ -13,6 +13,7 @@ export const placeholderPitch = () => [
 
 export function renderAll(data = EMPTY) {
   renderBalance(data.saldo, data.ventas_recomendadas);
+  $('aiSummary').textContent = data.resumen ?? '';
   renderPitch(data.once);
   renderMarket(data.compras_mercado);
   renderSales(data.ventas_recomendadas);

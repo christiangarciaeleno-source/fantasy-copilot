@@ -6,7 +6,8 @@ export function buildSummary(d) {
   const lines = [
     '⚽ *FANTASY MARCA - PLAN DE JORNADA* ⚽', '',
     `📊 *Esquema:* 1-${formation(d.once)}`,
-    `💰 *Saldo:* ${money(d.saldo)} ${d.saldo < 0 ? '🔴' : '🟢'}`, '',
+    `💰 *Saldo:* ${money(d.saldo)} ${d.saldo < 0 ? '🔴' : '🟢'}`,
+    ...(d.resumen ? [`🧠 ${d.resumen}`] : []), '',
     '👕 *ONCE:*',
     ...d.once.map((p) => `• ${p.posicion} ${p.nombre} (${p.equipo}) ${p.xp ?? 0} xP`)
   ];

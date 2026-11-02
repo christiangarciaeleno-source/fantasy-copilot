@@ -95,22 +95,13 @@
     <div class="bg-white rounded-2xl shadow-argon p-4 md:p-5 border border-gray-100">
       <div class="flex flex-col md:flex-row gap-4 items-stretch md:items-center">
         <div id="dropzoneBox" class="flex-1 border-2 border-dashed border-gray-200 hover:border-argon-primary rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer bg-gray-50/60 transition group relative min-h-[110px]">
-          <input type="file" id="fileInput" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer z-10">
+          <input type="file" id="fileInput" accept="image/*" multiple class="absolute inset-0 opacity-0 cursor-pointer z-10">
           <div id="dropEmpty" class="flex flex-col items-center">
             <span class="text-2xl mb-1 group-hover:scale-110 transition">📸</span>
-            <p class="text-xs font-bold text-argon-dark">Arrastra captura o haz clic</p>
-            <p class="text-[10px] text-argon-muted mt-0.5">Pantallazos de plantilla, saldo o mercado</p>
+            <p class="text-xs font-bold text-argon-dark">Arrastra capturas o haz clic</p>
+            <p class="text-[10px] text-argon-muted mt-0.5">Hasta 4: tu plantilla, tu alineación y el mercado</p>
           </div>
-          <div id="dropPreview" class="hidden items-center justify-between w-full px-2 z-20">
-            <div class="flex items-center gap-3">
-              <img id="imageThumbnail" class="h-14 w-14 object-cover rounded-lg border border-gray-200 shadow-sm" alt="Preview">
-              <div class="text-left">
-                <p id="imageFilename" class="text-xs font-bold text-argon-dark truncate max-w-[160px]">captura.png</p>
-                <span class="text-[10px] text-argon-success font-bold flex items-center gap-1">✓ Lista para procesar</span>
-              </div>
-            </div>
-            <button onclick="removeImage(event)" class="text-xs font-bold text-argon-danger hover:underline px-2 py-1 bg-red-50 rounded-lg">Borrar</button>
-          </div>
+          <div id="imageList" class="hidden flex-wrap justify-center gap-2 w-full mt-2 relative z-20"></div>
         </div>
         <div class="flex flex-col sm:flex-row md:flex-col gap-2.5 md:w-56 shrink-0">
           <button onclick="pasteFromClipboard()" class="flex-1 bg-gray-100 hover:bg-gray-200 active:scale-95 text-argon-dark font-bold py-2.5 px-3 rounded-xl text-xs transition flex items-center justify-center gap-2 border border-gray-200 shadow-sm">
@@ -166,6 +157,7 @@
               <div>
                 <h3 class="text-sm font-extrabold text-argon-dark">Alineación Recomendada</h3>
                 <p id="pitchSubLabel" class="text-[11px] text-argon-muted font-semibold">Maximización de puntos xP</p>
+                <p id="aiSummary" class="text-[11px] text-argon-dark mt-1.5 leading-snug"></p>
               </div>
               <span class="text-[10px] font-bold bg-argon-primary/10 text-argon-primary px-2.5 py-1 rounded-full uppercase">Movistar Fantasy MARCA</span>
             </div>

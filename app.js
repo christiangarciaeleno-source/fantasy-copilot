@@ -71,10 +71,10 @@ function show(data) {
 
 async function runAnalysis() {
   haptic(25);
-  if (!STATE.image) return toast('Sube o pega una captura antes de analizar', '📸');
+  if (!STATE.images.length) return toast('Sube o pega al menos una captura antes de analizar', '📸');
   setLoading(true);
   try {
-    const data = await analyze();
+    const data = await analyze((msg) => { $('analyzeLabel').textContent = msg; });
     show(data);
     haptic(40);
     data.sinInforme ? toast('Analizado solo con la captura: la búsqueda en medios falló', '⚠️') : toast('¡Análisis táctico completado!', '⚽');
@@ -97,7 +97,7 @@ async function copyManualPrompt() {
   haptic(15);
   try {
     await navigator.clipboard.writeText(manualPrompt());
-    toast('Prompt copiado: pégalo en Gemini o Claude junto a tu captura', '📋');
+    toast('Prompt copiado: pégalo en Gemini o Claude junto a tus capturas', '📋');
   } catch {
     toast('No se pudo acceder al portapapeles', '🔒');
   }
