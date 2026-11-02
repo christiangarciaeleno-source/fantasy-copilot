@@ -1,6 +1,6 @@
 import { STATE, saveSettings, saveLast, loadLast } from './js/state.js';
 import { $, toast, haptic } from './js/util.js';
-import { analyze } from './js/ai.js';
+import { analyze, validate } from './js/ai.js';
 import { renderAll } from './js/render.js';
 import { DEMO } from './js/demo.js';
 import { exportSummary } from './js/export.js';
@@ -101,7 +101,8 @@ async function runAnalysis() {
 
 function loadCompleteDemo() {
   haptic(30);
-  show(DEMO);
+  renderAll(DEMO); // sin saveLast: la demo no debe pisar el último análisis real
+  switchTab('once');
   toast('Datos demo de LaLiga cargados', '⚡');
 }
 
@@ -136,5 +137,6 @@ loadSettingsForm();
 setupDragAndDrop();
 setupPWA();
 const last = loadLast();
+try { if (STATE.data) validate(STATE.data); } catch { STATE.data = null; } // dato guardado corrupto: se ignora
 renderAll(STATE.data ?? undefined);
 if (last?.data) toast(`Último análisis restaurado (${new Date(last.ts).toLocaleString('es-ES')})`, '🕘');
