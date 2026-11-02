@@ -123,5 +123,11 @@ export function validate(r) {
 export async function analyze() {
   const claude = STATE.engine === 'claude';
   if (!(claude ? STATE.claudeKey : STATE.geminiKey)) throw Object.assign(new Error('Falta la API Key'), { code: 'NOKEY' });
-  return validate(await (claude ? callClaude : callGemini)(STATE.image));
+  const call = claude ? callClaude : callGemini;
+  try {
+    return validate(await call(STATE.image));
+  } catch (err) {
+    if (!/jugadores válidos|extraer el JSON/.test(err.message)) throw err;
+    return validate(await call(STATE.image)); // la IA a veces falla el formato: un reintento basta
+  }
 }
