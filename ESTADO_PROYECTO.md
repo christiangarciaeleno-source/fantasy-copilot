@@ -40,6 +40,7 @@ Regla: ningún archivo supera 300 líneas (máximo actual: `index.html`, 291).
 
 - Gemini responde desde el Pixel; falta una llamada completa con éxito (la clave probada dio "prepayment credits depleted", problema de facturación de Google). Claude sin probar.
 - Service Worker sin verificar en Chrome real (el navegador integrado no lo registró).
+- Búsqueda en medios (interruptor en Ajustes, activa por defecto): llamada previa con googleSearch (Gemini) o web_search (Claude) que genera un informe que se añade al prompt del análisis estructurado. Sin probar con claves reales.
 - Grounding eliminado: gastaba más cuota y no permitía forzar el esquema JSON.
 
 - Seguridad: las claves viven en `localStorage` del origen `*.github.io`; no alojar otras páginas de la cuenta que no sean de confianza.

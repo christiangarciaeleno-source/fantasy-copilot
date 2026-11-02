@@ -46,6 +46,7 @@ function loadSettingsForm() {
   if (![...sel.options].some((o) => o.value === STATE.model)) sel.add(new Option(STATE.model, STATE.model));
   sel.value = STATE.model;
   $('selectScoring').value = STATE.scoring;
+  $('toggleResearch').checked = STATE.research;
   syncEngineFields();
 }
 
@@ -55,7 +56,8 @@ function saveAppSettings() {
     geminiKey: $('inputGeminiKey').value.trim(),
     claudeKey: $('inputClaudeKey').value.trim(),
     model: $('selectModel').value,
-    scoring: $('selectScoring').value
+    scoring: $('selectScoring').value,
+    research: $('toggleResearch').checked
   });
   saveSettings();
   toggleSettingsModal();

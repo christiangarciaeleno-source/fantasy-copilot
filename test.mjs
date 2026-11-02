@@ -20,7 +20,7 @@ assert.match(apiError(429, 'long google text', 'Gemini').message, /Cuota de Gemi
 assert.match(apiError(503, null, 'Claude').message, /no responde/);
 assert.equal(apiError(400, 'bad request', 'Gemini').message, 'bad request');
 // analyze(): un once inválido se reintenta una vez; un 429 no se reintenta.
-Object.assign(STATE, { engine: 'gemini', geminiKey: 'k', image: { mime: 'image/jpeg', b64: 'x' } });
+Object.assign(STATE, { research: false, engine: 'gemini', geminiKey: 'k', image: { mime: 'image/jpeg', b64: 'x' } });
 const reply = (obj) => ({ ok: true, json: async () => ({ candidates: [{ content: { parts: [{ text: JSON.stringify(obj) }] } }] }) });
 let calls = 0;
 globalThis.fetch = async () => reply(++calls === 1 ? { ...DEMO, once: [] } : DEMO);
@@ -30,4 +30,13 @@ calls = 0;
 globalThis.fetch = async () => (calls++, { ok: false, status: 429, json: async () => ({}) });
 await assert.rejects(analyze(), /Cuota de Gemini/);
 assert.equal(calls, 1);
+// Con búsqueda activa: 1 llamada de informe + 1 de análisis, y el informe llega al prompt; si el informe falla, se analiza igual.
+STATE.research = true;
+const bodies = [];
+globalThis.fetch = async (_, o) => { bodies.push(JSON.parse(o.body)); return reply(bodies.length === 1 ? {} : DEMO); };
+assert.equal((await analyze()).once.length, 11);
+assert.equal(bodies.length, 2);
+assert.ok(bodies[0].tools?.[0].googleSearch && !bodies[1].tools);
+globalThis.fetch = async (_, o) => (JSON.parse(o.body).tools ? { ok: false, status: 500, json: async () => ({}) } : reply(DEMO));
+assert.equal((await analyze()).once.length, 11);
 console.log('OK');
