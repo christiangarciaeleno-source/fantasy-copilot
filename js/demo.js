@@ -1,5 +1,5 @@
-const j = (dorsal, nombre, posicion, equipo, titularidad_pct, xp, es_capitan = false) =>
-  ({ dorsal, nombre, posicion, equipo, titularidad_pct, xp, es_capitan });
+const j = (dorsal, nombre, posicion, equipo, titularidad_pct, xp) =>
+  ({ dorsal, nombre, posicion, equipo, titularidad_pct, xp });
 
 export const DEMO = {
   saldo: -1850000,
@@ -9,7 +9,7 @@ export const DEMO = {
     j(3, 'Raíllo', 'DEF', 'MLL', 88, 6.2), j(2, 'Giménez', 'DEF', 'ATM', 80, 5.9),
     j(8, 'Pedri', 'MED', 'FCB', 98, 7.8), j(5, 'Bellingham', 'MED', 'RMA', 96, 7.9),
     j(4, 'Zubimendi', 'MED', 'RSO', 92, 6.7),
-    j(19, 'Lamine Yamal', 'DEL', 'FCB', 99, 9.4, true), j(7, 'Vinícius Jr', 'DEL', 'RMA', 94, 8.8),
+    j(19, 'Lamine Yamal', 'DEL', 'FCB', 99, 9.4), j(7, 'Vinícius Jr', 'DEL', 'RMA', 94, 8.8),
     j(7, 'Griezmann', 'DEL', 'ATM', 60, 7.2)
   ],
   ventas_recomendadas: [

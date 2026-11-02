@@ -41,7 +41,10 @@ function loadSettingsForm() {
   $('selectEngine').value = STATE.engine;
   $('inputGeminiKey').value = STATE.geminiKey;
   $('inputClaudeKey').value = STATE.claudeKey;
-  $('selectModel').value = STATE.model;
+  const sel = $('selectModel');
+  // El fallback puede haber guardado un modelo que no está en la lista: se añade para no guardar ''.
+  if (![...sel.options].some((o) => o.value === STATE.model)) sel.add(new Option(STATE.model, STATE.model));
+  sel.value = STATE.model;
   $('selectScoring').value = STATE.scoring;
   $('toggleGrounding').checked = STATE.grounding;
   syncEngineFields();

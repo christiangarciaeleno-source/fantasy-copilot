@@ -1,16 +1,14 @@
 import { STATE } from './state.js';
 import { money, toast, haptic } from './util.js';
+import { formation } from './render.js';
 
 export function buildSummary(d) {
-  const cap = d.once.find((p) => p.es_capitan);
-  const fm = ['DEF', 'MED', 'DEL'].map((pos) => d.once.filter((p) => p.posicion === pos).length).join('-');
   const lines = [
     '⚽ *FANTASY MARCA - PLAN DE JORNADA* ⚽', '',
-    `📊 *Esquema:* 1-${fm}`,
-    `⭐ *Capitán:* ${cap?.nombre ?? '-'} (x2)`,
+    `📊 *Esquema:* 1-${formation(d.once)}`,
     `💰 *Saldo:* ${money(d.saldo)} ${d.saldo < 0 ? '🔴' : '🟢'}`, '',
     '👕 *ONCE:*',
-    ...d.once.map((p) => `• ${p.posicion} ${p.nombre} (${p.equipo}) ${p.xp} xP${p.es_capitan ? ' ©' : ''}`)
+    ...d.once.map((p) => `• ${p.posicion} ${p.nombre} (${p.equipo}) ${p.xp ?? 0} xP`)
   ];
   if (d.ventas_recomendadas.length) {
     lines.push('', '🚨 *VENTAS:*', ...d.ventas_recomendadas.map((v) => `• Vender ${v.nombre} (+${money(v.vm)}) – ${v.motivo}`));

@@ -10,12 +10,22 @@ export function setupDragAndDrop() {
   zone.addEventListener('drop', (e) => e.dataTransfer.files.length && handleFile(e.dataTransfer.files[0]));
 }
 
+// Máx. 1600px y JPEG: Claude rechaza >5 MB y la subida móvil es más rápida.
+async function shrink(file) {
+  const bmp = await createImageBitmap(file);
+  const k = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
+  const c = Object.assign(document.createElement('canvas'), { width: Math.round(bmp.width * k), height: Math.round(bmp.height * k) });
+  c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+  return c.toDataURL('image/jpeg', 0.85);
+}
+
 export function handleFile(file) {
   if (!file?.type.startsWith('image/')) return toast('Selecciona un archivo de imagen válido', '⚠️');
   const reader = new FileReader();
-  reader.onload = (e) => {
-    STATE.image = { mime: file.type, b64: e.target.result.split(',')[1] };
-    $('imageThumbnail').src = e.target.result;
+  reader.onload = async (e) => {
+    const url = await shrink(file).catch(() => e.target.result); // si falla, la original
+    STATE.image = { mime: url.slice(5, url.indexOf(';')), b64: url.split(',')[1] };
+    $('imageThumbnail').src = url;
     $('imageFilename').textContent = file.name || 'Captura_Fantasy.jpg';
     $('dropEmpty').classList.add('hidden');
     $('dropPreview').classList.replace('hidden', 'flex');

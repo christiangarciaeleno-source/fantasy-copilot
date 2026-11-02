@@ -2,6 +2,7 @@ import { STATE } from './state.js';
 
 const GEMINI = 'https://generativelanguage.googleapis.com/v1beta';
 const CLAUDE_MODEL = 'claude-sonnet-5-5';
+const TIMEOUT = 60000; // con mala cobertura el fetch no debe dejar el spinner colgado
 
 const S = { type: 'STRING' };
 const N = { type: 'NUMBER' };
@@ -14,8 +15,8 @@ export const SCHEMA = obj({
   once: list(obj({
     dorsal: { type: 'INTEGER' }, nombre: S,
     posicion: { type: 'STRING', enum: ['POR', 'DEF', 'MED', 'DEL'] },
-    equipo: S, titularidad_pct: N, xp: N, es_capitan: { type: 'BOOLEAN' }
-  }), { minItems: 11, maxItems: 11, description: 'Exactamente 11 jugadores, un único capitán' }),
+    equipo: S, titularidad_pct: N, xp: N
+  }), { minItems: 11, maxItems: 11, description: 'Exactamente 11 jugadores' }),
   ventas_recomendadas: list(obj({ nombre: S, vm: N, motivo: S })),
   compras_mercado: list(obj({
     nombre: S, vm: N, puja_sugerida: N,
@@ -28,7 +29,7 @@ const toClaudeSchema = (s) => JSON.parse(JSON.stringify(s).replace(/"type":"([A-
 const prompt = () => `Eres el analista de élite de Movistar Fantasy MARCA (LaLiga española).
 La imagen es una captura de la plantilla, del saldo o del mercado del usuario. Sistema de puntuación: ${STATE.scoring}.
 Reglas: todos los importes (saldo, vm, puja_sugerida) en euros como número entero (1,85 M€ = 1850000).
-"once" debe tener 11 jugadores con formación válida y un solo es_capitan=true.
+"once" debe tener 11 jugadores con formación válida (sin capitán).
 "ventas_recomendadas": obligatorias si saldo < 0 (el saldo debe ser >= 0 el viernes); si no, solo ventas claramente rentables.
 "compras_mercado": fichajes del mercado visible con puja sugerida; vacío si no se ve el mercado.
 Si un dato no aparece en la captura, estímalo con criterio y mantén listas vacías en lugar de inventar jugadores.`;
@@ -57,7 +58,8 @@ async function callGemini(img) {
   const post = (model) => fetch(`${GEMINI}/models/${model}:generateContent`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': STATE.geminiKey },
-    body: JSON.stringify(body)
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(TIMEOUT)
   });
   let res = await post(STATE.model);
   // Modelo retirado/no disponible: se busca el más reciente de la misma familia con la clave del usuario.
@@ -65,8 +67,8 @@ async function callGemini(img) {
     const model = await latestModel(STATE.model.includes('pro') ? 'pro' : 'flash');
     if (model) { STATE.model = model; localStorage.setItem('fc_model', model); res = await post(model); }
   }
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error?.message || 'Error en la API de Gemini');
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error?.message || `Error en la API de Gemini (HTTP ${res.status})`);
   const text = data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? '').join('');
   if (!text) throw new Error('La respuesta de Gemini llegó vacía');
   return extractJson(text);
@@ -92,24 +94,28 @@ async function callClaude(img) {
         { type: 'image', source: { type: 'base64', media_type: img.mime, data: img.b64 } },
         { type: 'text', text: prompt() }
       ] }]
-    })
+    }),
+    signal: AbortSignal.timeout(TIMEOUT)
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error?.message || 'Error en la API de Claude');
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error?.message || `Error en la API de Claude (HTTP ${res.status})`);
   const call = data.content?.find((b) => b.type === 'tool_use');
   if (!call) throw new Error('Claude no devolvió datos estructurados');
   return call.input;
 }
 
-function extractJson(text) {
+export function extractJson(text) {
   const m = text.replace(/```json|```/g, '').match(/\{[\s\S]*\}/);
   if (!m) throw new Error('No se pudo extraer el JSON de análisis');
   return JSON.parse(m[0]);
 }
 
-function validate(r) {
-  if (typeof r?.saldo !== 'number' || !Array.isArray(r.once) || !r.once.length) {
+export function validate(r) {
+  if (typeof r?.saldo !== 'number' || !Array.isArray(r.once)) {
     throw new Error('Respuesta sin saldo o sin once: prueba con otra captura');
+  }
+  if (r.once.length !== 11 || r.once.some((p) => !['POR', 'DEF', 'MED', 'DEL'].includes(p.posicion))) {
+    throw new Error('La IA no devolvió 11 jugadores válidos: reintenta o usa otra captura');
   }
   return { ...r, ventas_recomendadas: r.ventas_recomendadas ?? [], compras_mercado: r.compras_mercado ?? [] };
 }

@@ -1,12 +1,13 @@
 // Subir CACHE al cambiar cualquier asset para invalidar la caché anterior.
-const CACHE = 'fantasy-pro-v2';
+const CACHE = 'fantasy-pro-v3';
 const PRECACHE = [
   './', 'index.html', 'styles.css', 'tw-config.js', 'app.js', 'manifest.json', 'icon.svg',
   'js/util.js', 'js/state.js', 'js/ai.js', 'js/render.js', 'js/demo.js', 'js/export.js', 'js/image.js'
 ];
 
+// reload: salta la caché HTTP de Pages (max-age 600) al precachear.
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(PRECACHE)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(PRECACHE.map((u) => new Request(u, { cache: 'reload' })))).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (e) => {
@@ -19,7 +20,8 @@ self.addEventListener('activate', (e) => {
 
 // Stale-while-revalidate para GET (assets propios + Tailwind/fuentes CDN). Las llamadas a las APIs de IA son POST: no pasan por aquí.
 self.addEventListener('fetch', (e) => {
-  if (e.request.method !== 'GET') return;
+  const { origin, hostname } = new URL(e.request.url);
+  if (e.request.method !== 'GET' || (origin !== location.origin && hostname.endsWith('googleapis.com'))) return; // ListModels no se cachea
   e.respondWith(
     caches.open(CACHE).then(async (cache) => {
       const hit = await cache.match(e.request);

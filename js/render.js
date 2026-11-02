@@ -3,7 +3,7 @@ import { $, esc, money } from './util.js';
 const POS = ['POR', 'DEF', 'MED', 'DEL'];
 const EMPTY = { saldo: 0, once: [], ventas_recomendadas: [], compras_mercado: [] };
 
-const formation = (once) => POS.slice(1).map((p) => once.filter((j) => j.posicion === p).length).join('-');
+export const formation = (once) => POS.slice(1).map((p) => once.filter((j) => j.posicion === p).length).join('-');
 
 // Alineación vacía para el estado inicial (1-4-3-3).
 export const placeholderPitch = () => [
@@ -50,13 +50,10 @@ const saleCards = (ventas) => ventas.map((v) => `
 
 function pin(p) {
   const border = p.titularidad_pct < 70 ? 'border-argon-warning' : 'border-white';
-  const cap = p.es_capitan
-    ? '<div class="absolute -top-1 -right-1 w-4 h-4 bg-argon-warning rounded-full border border-white text-white text-[9px] font-black flex items-center justify-center shadow-sm">C</div>'
-    : '';
   return `
-    <div class="flex flex-col items-center w-14" onclick="navigator.vibrate?.(10)">
+    <div class="flex flex-col items-center w-14">
       <div class="relative w-10 h-10 rounded-full bg-white shadow-md border-2 ${border} flex items-center justify-center font-extrabold text-argon-dark text-xs">
-        ${esc(String(p.nombre ?? '?').slice(0, 2).toUpperCase())}${cap}
+        ${esc(String(p.nombre ?? '?').slice(0, 2).toUpperCase())}
       </div>
       <div class="mt-1 bg-black/65 backdrop-blur-sm px-1.5 py-0.5 rounded text-white text-[9px] font-bold text-center w-full truncate shadow-sm">${esc(p.nombre)}</div>
       <span class="text-[8px] font-bold text-white/90 drop-shadow">${p.xp ? esc(p.xp) + ' xP' : ''}${p.titularidad_pct < 100 ? ' · ' + esc(p.titularidad_pct) + '%' : ''}</span>
@@ -65,13 +62,12 @@ function pin(p) {
 
 function renderPitch(once) {
   const players = once.length ? once : placeholderPitch();
-  const cap = players.find((p) => p.es_capitan);
-  const xp = players.reduce((s, p) => s + (Number(p.xp) || 0), 0) + (Number(cap?.xp) || 0); // capitán puntúa doble
+  const xp = players.reduce((s, p) => s + (Number(p.xp) || 0), 0);
   const fm = formation(players);
   $('kpiXP').textContent = `${xp.toFixed(1)} pts`;
   $('kpiFormation').textContent = `Esquema: 1-${fm}`;
   $('pitchSubLabel').textContent = `1-${fm} • Maximización de puntos esperados`;
-  $('kpiCaptain').textContent = cap?.nombre ?? '--';
+  $('kpiDoubt').textContent = players.filter((p) => p.titularidad_pct < 70).length;
   POS.forEach((pos) => {
     $(`pitchLine${pos}`).innerHTML = players.filter((p) => p.posicion === pos).map(pin).join('');
   });

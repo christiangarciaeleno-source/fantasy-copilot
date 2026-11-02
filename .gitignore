@@ -7,3 +7,4 @@
 *.key
 node_modules/
 .claude/
+gemini-code-*.md
