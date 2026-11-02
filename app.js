@@ -40,15 +40,13 @@ function loadSettingsForm() {
   if (![...sel.options].some((o) => o.value === STATE.model)) sel.add(new Option(STATE.model, STATE.model));
   sel.value = STATE.model;
   $('selectScoring').value = STATE.scoring;
-  $('toggleResearch').checked = STATE.research;
 }
 
 function saveAppSettings() {
   Object.assign(STATE, {
     geminiKey: $('inputGeminiKey').value.trim(),
     model: $('selectModel').value,
-    scoring: $('selectScoring').value,
-    research: $('toggleResearch').checked
+    scoring: $('selectScoring').value
   });
   saveSettings();
   toggleSettingsModal();
@@ -91,11 +89,11 @@ async function runAnalysis() {
     const data = await analyze((msg) => { $('analyzeLabel').textContent = msg; });
     show(data);
     haptic(40);
-    data.sinInforme ? toast('Analizado solo con la captura: la búsqueda en medios falló', '⚠️') : toast('¡Análisis táctico completado!', '⚽');
+    toast('¡Análisis táctico completado!', '⚽');
   } catch (err) {
     if (err.code === 'NOKEY') {
       toggleSettingsModal();
-      return toast('Introduce la API Key del motor elegido en Ajustes', '🔑');
+      return toast('Introduce tu API Key de Gemini en Ajustes', '🔑');
     }
     console.error('Fantasy AI Error:', err);
     toast(err.name === 'TimeoutError'

@@ -6,7 +6,11 @@ const MAX_TEXT = 20000; // caracteres por texto: una página del Fantasy cabe de
 
 export function setupDragAndDrop() {
   const zone = $('dropzoneBox');
-  const add = (files) => [...files].forEach(handleFile);
+  const add = (files) => {
+    const room = MAX - STATE.inputs.length;
+    if (files.length > room) toast(`Solo caben ${MAX} entradas: se añaden las ${Math.max(room, 0)} primeras`, '⚠️');
+    [...files].slice(0, Math.max(room, 0)).forEach(handleFile);
+  };
   $('fileInput').addEventListener('change', (e) => { add(e.target.files); e.target.value = ''; });
   const hl = ['border-argon-primary', 'bg-argon-primary/5'];
   ['dragenter', 'dragover'].forEach((n) => zone.addEventListener(n, (e) => { e.preventDefault(); zone.classList.add(...hl); }));
@@ -32,13 +36,13 @@ function renderImages() {
       ${im.text
     ? `<div class="h-14 w-14 rounded-lg border border-gray-200 bg-white shadow-sm flex flex-col items-center justify-center text-[9px] font-bold text-argon-dark"><span class="text-base">📝</span>${(im.text.length / 1000).toFixed(1)}k</div>`
     : `<img src="${im.url}" class="h-14 w-14 object-cover rounded-lg border border-gray-200 shadow-sm" alt="Captura ${i + 1}">`}
-      <button onclick="removeImage(${i}, event)" class="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-argon-danger text-white text-[10px] font-bold leading-none shadow">✕</button>
+      <button onclick="removeImage(${i}, event)" aria-label="Quitar entrada ${i + 1}" class="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-argon-danger text-white text-[10px] font-bold leading-none shadow">✕</button>
     </div>`).join('') + `<p class="w-full text-[10px] font-bold text-argon-success">✓ ${STATE.inputs.length}/${MAX} entradas listas</p>`;
 }
 
 export function handleFile(file) {
   if (!file?.type.startsWith('image/')) return toast('Selecciona un archivo de imagen válido', '⚠️');
-  if (STATE.inputs.length >= MAX) return toast(`Máximo ${MAX} capturas: borra alguna para añadir otra`, '⚠️');
+  if (STATE.inputs.length >= MAX) return toast(`Máximo ${MAX} entradas: borra alguna para añadir otra`, '⚠️');
   const reader = new FileReader();
   reader.onload = async (e) => {
     const url = await shrink(file).catch(() => e.target.result); // si falla, la original
@@ -51,8 +55,11 @@ export function handleFile(file) {
   reader.readAsDataURL(file);
 }
 
+// Se quitan los emails: la página del Fantasy suele mostrar los de la cuenta y el texto va a Google.
+export const cleanText = (text) => text.replace(/[\w.+-]+@[\w-]+\.[\w.]+/g, '[email]').trim().slice(0, MAX_TEXT);
+
 export function addText(text) {
-  const clean = text.trim().slice(0, MAX_TEXT);
+  const clean = cleanText(text);
   if (clean.length < 30) return toast('El portapapeles no tiene texto del Fantasy: usa el favorito en la web', '⚠️');
   if (STATE.inputs.length >= MAX) return toast(`Máximo ${MAX} entradas: borra alguna para añadir otra`, '⚠️');
   STATE.inputs.push({ text: clean });

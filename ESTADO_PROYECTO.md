@@ -6,58 +6,64 @@
 
 ```
 .
-├── index.html                      290   UI Argon (sin lógica)
-├── app.js                          140   Entrada: tabs, ajustes, análisis, PWA
-├── sw.js                            37   Service Worker (precache + stale-while-revalidate)
-├── manifest.json                    13   standalone, portrait, #5e72e4
-├── styles.css                       70
-├── tailwind.config.js                     20   Tema Tailwind (para build-css.sh)
-├── icon.svg                          1
-├── js/
-│   ├── ai.js                       127   Motor Gemini (búsqueda + análisis) + esquema JSON
-│   ├── render.js                   114   Pizarra, saldo, mercado, ventas
-│   ├── image.js                     59   Captura: drag&drop, input, portapapeles
-│   ├── state.js                     37   STATE + persistencia localStorage
-│   ├── export.js                    31   Resumen con emojis para WhatsApp/Telegram
-│   ├── demo.js                      23   Datos demo
-│   └── util.js                      21   $, esc, money, haptic, toast
-├── test.mjs                         18   Tests (node test.mjs)
-├── .gitignore                        9
-└── ESTADO_PROYECTO.md                –   Este archivo
+├── index.html              286   UI Argon (sin lógica)
+├── app.js                  169   Entrada: tabs, ajustes, análisis, modo manual, PWA
+├── sw.js                    37   Service Worker (precache + stale-while-revalidate)
+├── manifest.json            15   standalone, portrait, #5e72e4
+├── styles.css               70   CSS propio (fuente de app.css)
+├── app.css                   1   CSS generado (Tailwind CLI + styles.css); no editar
+├── tailwind.config.js       21   Tema Tailwind para build-css.sh
+├── build-css.sh              5   Regenera app.css
+├── icon.svg                  1   Icono vectorial
+├── js/ai.js                191   Gemini: transporte con reintentos/reserva, prompt, esquema, validación, modo manual
+├── js/render.js            115   Pizarra, saldo, mercado, ventas, resumen
+├── js/image.js              99   Entradas: capturas (máx. 4) y texto pegado
+├── js/bookmarklet.js        19   Favorito que copia el texto de la web del Fantasy
+├── js/state.js              32   STATE + persistencia localStorage
+├── js/export.js             32   Resumen con emojis para WhatsApp/Telegram
+├── js/demo.js               24   Datos demo
+├── js/util.js               21   $, esc, money, haptic, toast
+├── test.mjs                107   Tests (node test.mjs)
+├── icon-192.png / icon-512.png   Iconos PWA
+├── .gitignore
+└── ESTADO_PROYECTO.md            Este archivo
 ```
 
-Regla: ningún archivo supera 300 líneas (máximo actual: `index.html`, 291).
+Regla: ningún archivo (salvo `app.css`, generado) supera 300 líneas (máximo actual: `index.html`, 286).
 
 ## 2. Despliegue
 
-- Repositorio: https://github.com/christiangarciaeleno-source/fantasy-copilot (público, rama `main`, )
-- GitHub Pages: activo, fuente `main` / `/`, último build `built`
+- Repositorio: https://github.com/christiangarciaeleno-source/fantasy-copilot (público, rama `main`)
+- GitHub Pages: fuente `main` / `/`, despliegue automático en cada `git push`.
 - URL pública: **https://christiangarciaeleno-source.github.io/fantasy-copilot/**
-- Despliegue: automático en cada `git push` a `main`.
-- Al cambiar cualquier asset, subir `CACHE` en `sw.js` (nombre actual en `sw.js`) para invalidar la caché.
+- Al cambiar cualquier asset, subir `CACHE` en `sw.js` (`fantasy-pro-vN`) para invalidar la caché; en el móvil hay que cerrar y abrir la PWA dos veces.
+- CSS: regenerar `app.css` con `./build-css.sh` si se añaden clases en `index.html` o `js/`.
 
-## 3. Pendiente / no verificado
+## 3. Cómo funciona
 
-- Gemini responde desde el Pixel; falta una llamada completa con éxito (la clave probada dio "prepayment credits depleted", problema de facturación de Google).
-- Service Worker sin verificar en Chrome real (el navegador integrado no lo registró).
-- Búsqueda en medios (interruptor en Ajustes, activa por defecto): llamada previa con googleSearch que genera un informe que se añade al prompt del análisis estructurado. Sin probar con claves reales.
-- Grounding eliminado: gastaba más cuota y no permitía forzar el esquema JSON.
+- Entradas (máx. 4, mezclables): capturas (reducidas a 1600 px JPEG) o texto pegado (emails sustituidos por `[email]`, máx. 20.000 caracteres).
+- Análisis: una llamada a Gemini con esquema JSON forzado (`saldo`, `resumen`, `once` de 11, `ventas_recomendadas`, `compras_mercado`).
+  Transporte: 2 intentos por modelo (`gemini-2.5-flash` → reserva `gemini-2.5-flash-lite`), un timeout no se repite con el mismo modelo, tope total 100 s, sin "thinking" en 2.5 Flash, 404 → busca el Flash más nuevo y lo guarda (`fc_model`).
+  Respuesta normalizada (posición, "85%", "5,5", 0,9 → 90) y un reintento con pista si el once no es válido.
+- Modo manual (sin API): "Copiar prompt" + pegar el JSON de un chat de Gemini/Claude + "Importar respuesta".
+- Favorito (`js/bookmarklet.js`): copia el texto visible de la web del Fantasy en Chrome del móvil; se pega con "Pegar texto del Fantasy".
+- Persistencia: último análisis y ajustes en `localStorage`; el restaurado se valida al arrancar. La demo no pisa el análisis guardado.
 
-- Seguridad: las claves viven en `localStorage` del origen `*.github.io`; no alojar otras páginas de la cuenta que no sean de confianza.
+## 4. Pendiente / no verificado
 
-## 4. Próximas mejoras recomendadas
+- Ningún análisis completo con éxito con clave real todavía (primero cuota/facturación de Google, después timeouts). Usar "Probar conexión" en Ajustes para aislar el fallo.
+- El favorito no se ha probado contra la web real de MARCA (no se sabe si los datos salen como texto en el DOM).
+- Service Worker e instalación PWA sin verificar en el Pixel.
+- Seguridad: la clave vive en `localStorage` del origen `*.github.io`; no alojar otras páginas no fiables en la cuenta. Revocar cualquier clave pegada en chats.
 
-1. **Probar en el Pixel**: instalación PWA, ambos motores y el resumen al portapapeles.
-2. **Iconos PNG** 192/512 (+ maskable) para garantizar instalabilidad.
-3. **Datos objetivos**: integrar SofaScore u otra fuente para `xp` y `titularidad_pct`, en lugar de estimarlos con la IA. Revisar términos de uso y CORS (puede requerir proxy).
-4. **Cronistas MARCA / analistas**: recuperar la pestaña de noticias con una fuente real (scraping vía proxy o grounding), con su propio esquema.
-5. **Modo offline estricto**: autohospedar Tailwind (build estático) y fuentes, para no depender de CDN con el Service Worker.
-6. **Historial multi-jornada**: guardar varios análisis (no solo el último) y compararlos.
-7. **Reintento automático** si `validate` rechaza el once (ya valida 11 jugadores y posiciones; sin capitán, es premium).
-8. **Seguridad de claves**: valorar un proxy ligero si la app se comparte con más gente.
+## 5. Decisiones
 
-- Decisión: solo Gemini (capa gratuita); se eliminó el motor Claude por ser de pago.
-- CSS: `app.css` se genera con `./build-css.sh` (Tailwind CLI 3.4.17 + `styles.css`); regenerarlo si se añaden clases nuevas en `index.html` o `js/`. Ya no se compila Tailwind en el móvil.
-- Modo manual (sin API): botón "Copiar prompt" + pegar el JSON de Gemini/Claude chat y "Importar respuesta". La búsqueda en medios pasa a desactivada por defecto (clave `fc_search`) y con tope de 30 s.
-- Análisis con hasta 4 capturas a la vez (plantilla, alineación, mercado, saldo) en una sola llamada; la IA devuelve además `resumen` (valoración de la alineación actual). Transporte resistente: 2 intentos + modelo de reserva `gemini-2.5-flash-lite`, tope total de 100 s, sin "thinking" en 2.5 Flash y normalización de la respuesta (posición, % y decimales con coma).
-- Datos del Fantasy sin capturas: favorito (`js/bookmarklet.js`) que copia el texto visible de la web del Fantasy desde Chrome del móvil; la PWA lo añade con "Pegar texto del Fantasy" (`STATE.inputs` admite capturas y textos, máx. 4). Probado solo en un navegador local: falta confirmarlo en el Pixel contra la web real de MARCA (no se sabe aún si los datos salen como texto en el DOM).
+- Solo Gemini (capa gratuita): se eliminó el motor Claude (de pago), el grounding y la búsqueda en medios (sin probar, gastaba cuota y tiempo).
+- Sin capitán (es premium).
+- Tailwind compilado a `app.css` (20 KB) en lugar del script del CDN (400 KB).
+
+## 6. Ideas
+
+1. Historial multi-jornada (hoy solo se guarda el último análisis).
+2. Datos objetivos de SofaScore u otra fuente para `xp` y `titularidad_pct` (términos de uso y CORS).
+3. Botón "Cancelar" durante el análisis.

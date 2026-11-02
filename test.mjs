@@ -1,6 +1,7 @@
 // Ejecutar: node test.mjs
 import assert from 'node:assert/strict';
-globalThis.localStorage = { getItem: () => null, setItem() {} };
+const saved = {};
+globalThis.localStorage = { getItem: () => null, setItem: (k, v) => { saved[k] = v; } };
 const { extractJson, validate, apiError, analyze, manualPrompt, importManual, pace } = await import('./js/ai.js');
 const { STATE } = await import('./js/state.js');
 const { buildSummary } = await import('./js/export.js');
@@ -16,16 +17,16 @@ assert.throws(() => extractJson('sin json'), /JSON/);
 assert.equal(money(-1850000), '-1.85 M€');
 assert.match(buildSummary(DEMO), /Esquema:\* 1-4-3-3/);
 assert.ok(!/undefined|Capitán/.test(buildSummary(DEMO)));
-assert.match(apiError(429, 'long google text', 'Gemini').message, /Cuota de Gemini agotada/);
+assert.match(apiError(429, 'long google text', 'Gemini').message, /Cuota de Gemini agotada.*modo manual/);
 assert.match(apiError(503, null, 'Gemini').message, /no responde/);
 assert.equal(apiError(400, 'bad request', 'Gemini').message, 'bad request');
 // --- analyze(): transporte resistente ---
 pace.wait = 0;
-Object.assign(STATE, { research: false, geminiKey: 'k', model: 'gemini-2.5-flash', inputs: [{ mime: 'image/jpeg', b64: 'x' }, { mime: 'image/jpeg', b64: 'y' }, { text: 'Plantilla: Lamine Yamal 9,4' }] });
+Object.assign(STATE, { geminiKey: 'k', model: 'gemini-2.5-flash', inputs: [{ mime: 'image/jpeg', b64: 'x' }, { mime: 'image/jpeg', b64: 'y' }, { text: 'Plantilla: Lamine Yamal 9,4' }] });
 const ok = (obj) => ({ ok: true, json: async () => ({ candidates: [{ content: { parts: [{ text: JSON.stringify(obj) }] } }] }) });
 const fail = (status) => ({ ok: false, status, json: async () => ({}) });
 let urls = [], bodies = [];
-const mock = (fn) => { urls = []; bodies = []; globalThis.fetch = async (url, o) => { urls.push(url); bodies.push(JSON.parse(o.body)); return fn(urls.length); }; };
+const mock = (fn) => { urls = []; bodies = []; globalThis.fetch = async (url, o) => { urls.push(url); bodies.push(o.body ? JSON.parse(o.body) : null); return fn(urls.length); }; };
 
 // Todas las capturas viajan en una sola llamada, y 2.5 Flash va sin "thinking".
 mock(() => ok(DEMO));
@@ -72,13 +73,27 @@ assert.equal(limpio.once.at(-1).posicion, 'DEL');
 assert.equal(limpio.once[0].titularidad_pct, 85);
 assert.equal(limpio.once[0].xp, 5.5);
 
-// Con búsqueda activa: 1 llamada de informe + 1 de análisis, y si el informe falla se analiza igual y se avisa.
-STATE.research = true;
-mock((n) => (n === 1 ? ok({}) : ok(DEMO)));
-assert.equal((await analyze()).sinInforme, false);
-assert.ok(bodies[0].tools?.[0].googleSearch && !bodies[1].tools);
-mock((n) => (bodies[n - 1].tools ? fail(500) : ok(DEMO)));
-assert.equal((await analyze()).sinInforme, true);
+// Red caída (fetch lanza TypeError): mensaje claro y sin cuatro reintentos.
+mock(() => { throw new TypeError('Failed to fetch'); });
+await assert.rejects(analyze(), /Sin conexión con Google/);
+assert.equal(urls.length, 2);
+
+// Modelo retirado (404): se busca el Flash más nuevo, se guarda y el análisis sigue con reintentos.
+mock((n) => {
+  if (/models\?pageSize/.test(urls[n - 1])) return { ok: true, json: async () => ({ models: [{ name: 'models/gemini-2.9-flash', supportedGenerationMethods: ['generateContent'] }, { name: 'models/gemini-2.9-flash-lite', supportedGenerationMethods: ['generateContent'] }] }) };
+  return /gemini-2\.5-flash:/.test(urls[n - 1]) ? fail(404) : ok(DEMO);
+});
+assert.equal((await analyze()).once.length, 11);
+assert.equal(STATE.model, 'gemini-2.9-flash');
+assert.equal(saved.fc_model, 'gemini-2.9-flash');
+STATE.model = 'gemini-2.5-flash';
+
+// titularidad como 0,9 en vez de 90: no se marca a todos como "en duda".
+assert.equal(validate({ ...DEMO, once: DEMO.once.map((p) => ({ ...p, titularidad_pct: 0.9 })) }).once[0].titularidad_pct, 90);
+
+// El texto pegado se limpia de emails antes de ir a Google.
+const { cleanText } = await import('./js/image.js');
+assert.equal(cleanText('  Hola pepe.perez+fantasy@gmail.com, tu plantilla '), 'Hola [email], tu plantilla');
 
 // Modo manual: el prompt pide JSON y se importa tal cual lo devuelve un chat (con ```json y texto alrededor).
 assert.match(manualPrompt(), /Responde SOLO con un JSON/);
