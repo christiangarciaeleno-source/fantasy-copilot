@@ -134,11 +134,13 @@
 
     <!-- Desktop tabs -->
     <div class="hidden md:flex gap-2 bg-white p-1.5 rounded-xl shadow-sm border border-gray-100 self-start">
+      <button onclick="switchTab('equipo')" id="tabBtn-equipo" class="tab-pill px-4 py-2 rounded-lg text-xs font-extrabold transition text-gray-500 hover:bg-gray-50">🧑‍🤝‍🧑 Mi Equipo</button>
       <button onclick="switchTab('once')" id="tabBtn-once" class="tab-pill active px-4 py-2 rounded-lg text-xs font-extrabold transition bg-argon-primary/10 text-argon-primary">⚽ Mi Once & Jornada</button>
       <button onclick="switchTab('mercado')" id="tabBtn-mercado" class="tab-pill px-4 py-2 rounded-lg text-xs font-extrabold transition text-gray-500 hover:bg-gray-50">📈 Radar de Mercado & Fichajes</button>
       <button onclick="switchTab('cartera')" id="tabBtn-cartera" class="tab-pill px-4 py-2 rounded-lg text-xs font-extrabold transition text-gray-500 hover:bg-gray-50">💼 Cartera & Ventas</button>
     </div>
 
+    <div id="view-equipo" class="tab-view"></div>
     <!-- TAB 1: MI ONCE -->
     <div id="view-once" class="tab-view active">
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
@@ -212,6 +214,9 @@
   <!-- Mobile bottom nav -->
   <nav class="md:hidden fixed bottom-0 left-0 w-full bg-white shadow-argon-nav z-40 border-t border-gray-100 pb-safe">
     <div class="flex justify-around items-center h-16">
+      <button onclick="switchTab('equipo')" id="navBtn-equipo" class="nav-button flex flex-col items-center justify-center w-full h-full text-gray-400 hover:text-argon-primary transition active:scale-90">
+        <span class="text-lg">🧑‍🤝‍🧑</span><span class="text-[10px] font-bold mt-0.5">Equipo</span>
+      </button>
       <button onclick="switchTab('once')" id="navBtn-once" class="nav-button flex flex-col items-center justify-center w-full h-full text-argon-primary transition active:scale-90">
         <span class="text-lg">⚽</span><span class="text-[10px] font-bold mt-0.5">Mi Once</span>
       </button>

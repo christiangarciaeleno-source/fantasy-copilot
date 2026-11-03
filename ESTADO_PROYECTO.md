@@ -6,9 +6,9 @@
 
 ```
 .
-├── index.html              298   UI Argon (sin lógica)
-├── app.js                  191   Entrada: tabs, ajustes, análisis, modo manual, PWA
-├── sw.js                      37   Service Worker (precache + stale-while-revalidate)
+├── index.html              286   UI Argon (sin lógica)
+├── app.js                  194   Entrada: tabs, ajustes, análisis, modo manual, PWA
+├── sw.js                       37   Service Worker (precache + stale-while-revalidate)
 ├── manifest.json            15   standalone, portrait, #5e72e4
 ├── styles.css               70   CSS propio (fuente de app.css)
 ├── app.css                   1   CSS generado (Tailwind CLI + styles.css); no editar
@@ -18,12 +18,15 @@
 ├── js/ai.js                201   Gemini: transporte con reintentos/reserva, prompt, esquema, validación, modo manual
 ├── js/render.js            141   Pizarra, saldo, mercado, ventas, resumen
 ├── js/openrouter.js        67   Motor OpenRouter (modelos gratuitos con visión, con reserva)
+├── js/team.js             174   Pestaña «Mi equipo»: saldo, plantilla y mercado editables, selector por equipo con fotos
+├── data/laliga.json     ~36 KB   Equipos y plantillas de Primera + fotos (generado)
+├── scripts/build-laliga.mjs  43   Regenera data/laliga.json (ESPN + Wikidata/Commons)
 ├── js/image.js              99   Entradas: capturas (máx. 4) y texto pegado
-├── js/state.js                53   STATE + persistencia localStorage
-├── js/export.js              67   Resumen con emojis para WhatsApp/Telegram
+├── js/state.js                 60   STATE + persistencia localStorage
+├── js/export.js               69   Resumen con emojis para WhatsApp/Telegram
 ├── js/demo.js                29   Datos demo
 ├── js/util.js                31   $, esc, money, haptic, toast
-├── test.mjs                173   Tests (node test.mjs)
+├── test.mjs                194   Tests (node test.mjs)
 ├── skills/fantasy-analista/SKILL.md   84   Skill del analista (Claude Code) y fuente de las instrucciones para Gemini/Claude
 ├── icon-192.png / icon-512.png   Iconos PWA
 ├── .gitignore
@@ -47,6 +50,8 @@ Regla: ningún archivo (salvo `app.css`, generado) supera 300 líneas (máximo a
 - Análisis: una llamada a Gemini con esquema JSON forzado (`saldo`, `resumen`, `once` de 11, `ventas_recomendadas`, `compras_mercado`).
   Transporte: 2 intentos por modelo (`gemini-2.5-flash` → reserva `gemini-2.5-flash-lite`), un timeout no se repite con el mismo modelo, tope total 100 s, sin "thinking" en 2.5 Flash, 404 → busca el Flash más nuevo y lo guarda (`fc_model`).
   Respuesta normalizada (posición, "85%", "5,5", 0,9 → 90) y un reintento con pista si el once no es válido.
+- **Mi equipo** (pestaña): saldo, plantilla y mercado de la liga editables a mano (valor, cláusula, puja en M€ con coma, estado). Se añaden jugadores con un desplegable de equipo + lista con foto, o buscando en toda la liga, o a mano. Se guarda en `fc_team`; viaja en "Copiar mi JSON" (`equipo`) y en "Copiar prompt"; al importar un JSON con `saldo`/`plantilla`/`mercado` (p. ej. sacado de capturas por la IA) se rellena solo.
+- Datos de jugadores: `data/laliga.json` sale de `node scripts/build-laliga.mjs` (plantillas de ESPN, API pública no oficial; fotos de Wikimedia Commons vía Wikidata, ~31 % de cobertura, el resto muestra iniciales). Repetir el script cuando haya fichajes. No se copian valores de mercado de terceros (Comuniate): la skill manda al analista a consultarlos y citarlos.
 - Motores (Ajustes): Google Gemini o OpenRouter (modelos `:free` con visión: se pide la lista en cada análisis y se prueban los 3 mejores; sin clave pegada de pago; ~50 peticiones/día sin créditos; hay que activar los endpoints gratuitos en openrouter.ai/settings/privacy). CORS de OpenRouter comprobado desde el navegador; el flujo completo con clave real sin probar.
 - **Analista sin API (lo principal):** `skills/fantasy-analista/SKILL.md` es la skill (método de análisis, reglas del juego, principios de especialistas con fuentes, formato JSON v2). En Claude Code se enlaza desde `.claude/skills/` (symlink, ignorado por git). La app la carga y la antepone en "Copiar prompt" junto al último análisis guardado, para pegarlo en gemini.google.com o claude.ai.
 - JSON v2 (`version`, `fecha`, `jornada`, `liga`, `saldo`, `resumen`, `once`, `ventas_recomendadas`, `compras_mercado`, `consejos`): "Copiar mi JSON" exporta el último análisis + resumen del historial; "Importar respuesta" lo carga y alimenta el panel de **consejos** y el **seguimiento** (un análisis por día, últimos 30, `fc_hist`; pulsar un día lo muestra).

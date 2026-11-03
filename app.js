@@ -1,4 +1,5 @@
-import { STATE, saveSettings, saveLast, loadLast, loadHistory, latestData } from './js/state.js';
+import { STATE, saveSettings, saveLast, loadLast, loadHistory, latestData, hasTeam } from './js/state.js';
+import { renderTeam, initTeam, adoptTeam } from './js/team.js';
 import { $, toast, haptic } from './js/util.js';
 import { analyze, validate, manualPrompt, importManual, ping } from './js/ai.js';
 import { renderAll } from './js/render.js';
@@ -9,6 +10,7 @@ import { setupDragAndDrop, removeImage, pasteFromClipboard, pasteText } from './
 // --- Navegación ---
 function switchTab(tab) {
   haptic(12);
+  if (tab === 'equipo') renderTeam();
   document.querySelectorAll('.tab-view').forEach((v) => v.classList.toggle('active', v.id === `view-${tab}`));
   document.querySelectorAll('.tab-pill').forEach((b) => {
     const on = b.id === `tabBtn-${tab}`;
@@ -22,7 +24,8 @@ function switchTab(tab) {
     b.classList.toggle('text-argon-primary', on);
     b.classList.toggle('text-gray-400', !on);
   });
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (tab === 'equipo') $('view-equipo').scrollIntoView({ behavior: 'smooth' }); // el editor queda bajo la cabecera
+  else window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // --- Ajustes ---
@@ -119,7 +122,7 @@ const loadSkill = () => skillText ??= fetch('skills/fantasy-analista/SKILL.md').
 async function copyManualPrompt() {
   haptic(15);
   try {
-    await navigator.clipboard.writeText(manualPrompt(await loadSkill(), latestData()));
+    await navigator.clipboard.writeText(manualPrompt(await loadSkill(), latestData(), hasTeam(STATE.team) ? STATE.team : null));
     toast('Prompt copiado: pégalo en Gemini o Claude con tus capturas o tu texto', '📋');
   } catch {
     toast('No se pudo acceder al portapapeles', '🔒');
@@ -129,7 +132,9 @@ async function copyManualPrompt() {
 function importManualJson() {
   haptic(25);
   try {
-    show(importManual($('manualJson').value));
+    const data = importManual($('manualJson').value);
+    show(data);
+    adoptTeam(data); // plantilla, mercado y saldo del JSON rellenan «Mi equipo»
     $('manualJson').value = '';
     toast('Respuesta importada', '⚽');
   } catch (err) {
@@ -182,6 +187,7 @@ loadSettingsForm();
 setupDragAndDrop();
 setupPWA();
 loadHistory();
+initTeam();
 const last = loadLast();
 try { if (STATE.data) validate(STATE.data); } catch { STATE.data = null; } // dato guardado corrupto: se ignora
 renderAll(STATE.data ?? undefined);

@@ -146,8 +146,8 @@ ${SHAPE}`;
 // Con la skill (js carga skills/fantasy-analista/SKILL.md) el chat recibe el método, las reglas y el formato; sin ella, el prompt básico.
 const stripFrontmatter = (md) => md.replace(/^---[\s\S]*?---\s*/, '');
 
-export const manualPrompt = (skill = '', previous = null) => (skill
-  ? `${stripFrontmatter(skill)}\n\n---\nTAREA: analiza lo que adjunto (capturas y/o texto copiado de mi Fantasy) con estas instrucciones y responde con tu comentario y el bloque JSON del formato indicado.${previous ? `\nMi último análisis, para el seguimiento (JSON):\n${JSON.stringify(previous)}` : ''}`
+export const manualPrompt = (skill = '', previous = null, team = null) => (skill
+  ? `${stripFrontmatter(skill)}\n\n---\nTAREA: analiza lo que adjunto (capturas y/o texto copiado de mi Fantasy) con estas instrucciones y responde con tu comentario y el bloque JSON del formato indicado.${team ? `\nMi equipo ahora (JSON que yo mismo he editado: es la fuente de verdad; si falta algún valor, búscalo en fuentes públicas y cítalo):\n${JSON.stringify(team)}` : ''}${previous ? `\nMi último análisis, para el seguimiento (JSON):\n${JSON.stringify(previous)}` : ''}`
   : jsonPrompt('', '\nAntes de responder, busca en la web (Jornada Perfecta, Comuniate, AsesoríasFantasy, Sofascore, Marca, AS) lesiones, sancionados, alineaciones probables y forma reciente de los jugadores de la captura, y úsalo.'));
 
 // El historial del JSON exportado es solo contexto para la IA: el de la app es local.

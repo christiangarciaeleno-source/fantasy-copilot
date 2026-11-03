@@ -1,4 +1,4 @@
-import { STATE, latestData } from './state.js';
+import { STATE, latestData, hasTeam } from './state.js';
 import { money, toast, haptic } from './util.js';
 import { formation, totalXp } from './render.js';
 
@@ -32,17 +32,19 @@ export async function exportSummary() {
 }
 
 // JSON para pasárselo a Claude o Gemini: el análisis actual + un resumen del historial para el seguimiento.
-export const buildJson = (d, history) => JSON.stringify({
+export const buildJson = (d, history, team) => JSON.stringify({
   version: 2,
+  fecha: new Date().toLocaleDateString('sv-SE'),
   ...d,
+  ...(team && hasTeam(team) && { equipo: team }),
   historial: history.slice(-14).map((h) => ({ fecha: h.fecha, saldo: h.data.saldo, xp: +totalXp(h.data.once).toFixed(1), consejos: h.data.consejos?.length ?? 0 }))
 });
 
 export async function exportJson() {
   haptic(20);
-  if (!latestData()) return toast('Analiza o importa un análisis antes de exportar', '⚠️');
+  if (!latestData() && !hasTeam(STATE.team)) return toast('Rellena Mi equipo o importa un análisis antes de exportar', '⚠️');
   try {
-    await navigator.clipboard.writeText(buildJson(latestData(), STATE.history));
+    await navigator.clipboard.writeText(buildJson(latestData() ?? {}, STATE.history, STATE.team));
     toast('JSON copiado: pégalo en Claude o Gemini', '📤');
   } catch {
     toast('No se pudo acceder al portapapeles', '🔒');

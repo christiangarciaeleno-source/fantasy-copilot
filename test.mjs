@@ -134,4 +134,61 @@ Object.assign(STATE, { engine: 'gemini', orKey: 'sk-or-k' });
 assert.match(manualPrompt(), /Responde SOLO con un JSON/);
 assert.equal(importManual('Aquí tienes:\n```json\n' + JSON.stringify(DEMO) + '\n```').once.length, 11);
 assert.throws(() => importManual('no es json'), /JSON/);
+// --- Skill, formato v2, seguimiento y recordatorio ---
+const skill = (await import('node:fs')).readFileSync('./skills/fantasy-analista/SKILL.md', 'utf8');
+const mp = manualPrompt(skill, DEMO);
+assert.ok(!mp.startsWith('---') && /Analista de LALIGA Fantasy/.test(mp)); // sin el frontmatter de la skill
+assert.ok(mp.includes('"version": 2') && mp.includes('"consejos"')); // el formato que importa la app
+assert.ok(mp.includes(JSON.stringify(DEMO))); // contexto del último análisis
+assert.ok(manualPrompt('', null).includes('Responde SOLO con un JSON')); // sin skill: prompt básico
+
+const v2 = validate({ ...DEMO, fecha: undefined, consejos: undefined });
+assert.match(v2.fecha, /^\d{4}-\d{2}-\d{2}$/);
+assert.deepEqual(v2.consejos, []);
+assert.equal(validate({ ...DEMO, fecha: '2026-11-03 22:00' }).fecha, '2026-11-03');
+// Lo que exporta la app lo reimporta la app (ida y vuelta), sin arrastrar el historial.
+const { saveLast, STATE: ST } = await import('./js/state.js');
+const { buildJson, buildIcs } = await import('./js/export.js');
+ST.history = [];
+saveLast({ ...DEMO, fecha: '2026-11-02', saldo: -2000000 });
+saveLast({ ...DEMO, fecha: '2026-11-03' });
+saveLast({ ...DEMO, fecha: '2026-11-03', saldo: 100 }); // mismo día: sustituye
+assert.deepEqual(ST.history.map((h) => [h.fecha, h.data.saldo]), [['2026-11-02', -2000000], ['2026-11-03', 100]]);
+const exported = buildJson(ST.data, ST.history);
+assert.equal(JSON.parse(exported).historial.length, 2);
+const back = importManual('Aquí va mi JSON:\n' + exported);
+assert.equal(back.once.length, 11);
+assert.ok(!('historial' in back));
+for (let d = 0; d < 40; d++) saveLast({ ...DEMO, fecha: `2027-01-${String(d % 28 + 1).padStart(2, '0')}x`.slice(0, 10) });
+assert.ok(ST.history.length <= 30);
+
+const ics = buildIcs(new Date('2026-11-03T10:00:00Z'));
+assert.ok(ics.includes('RRULE:FREQ=DAILY') && ics.includes('T220000') && ics.includes('BEGIN:VALARM'));
+assert.match(ics, /DTSTART:2026110\dT220000/);
+// --- Mi equipo: importes en millones, importar desde JSON y viaje al prompt / JSON ---
+const { toEuros, fromEuros, toSigned, adoptTeam } = await import('./js/team.js');
+assert.equal(toEuros('5,2'), 5200000);
+assert.equal(toEuros('5.25'), 5250000);
+assert.equal(toEuros('5200000'), 5200000); // euros enteros: se respetan
+assert.equal(toEuros(''), undefined);
+assert.equal(toSigned('-1,2'), -1200000);
+assert.equal(toSigned('abc'), 0);
+assert.equal(fromEuros(1850000), '1,85');
+assert.equal(fromEuros(undefined), '');
+const { hasTeam } = await import('./js/state.js');
+assert.equal(hasTeam(ST.team), false);
+adoptTeam({ saldo: -500000, plantilla: [{ nombre: 'Lamine Yamal', posicion: 'DEL', equipo: 'BAR', vm: 90000000, clausula: 120000000, estado: 'duda' }, { nombre: 'X', posicion: 'ZZ', vm: 'mucho' }, { sin: 'nombre' }], mercado: [] });
+assert.equal(ST.team.saldo, -500000);
+assert.deepEqual(ST.team.plantilla.map((p) => [p.nombre, p.posicion, p.vm, p.estado]), [['Lamine Yamal', 'DEL', 90000000, 'duda'], ['X', 'MED', undefined, undefined]]);
+assert.equal(hasTeam(ST.team), true);
+assert.ok(manualPrompt(skill, null, ST.team).includes('"clausula":120000000'));
+assert.ok(!manualPrompt(skill, null, null).includes('Mi equipo ahora'));
+const withTeam = JSON.parse(buildJson({}, ST.history, ST.team));
+assert.equal(withTeam.equipo.saldo, -500000);
+assert.match(withTeam.fecha, /^\d{4}-\d{2}-\d{2}$/);
+assert.ok(!('equipo' in JSON.parse(buildJson({}, [], { saldo: 0, plantilla: [], mercado: [] }))));
+// los datos de plantillas generados: 20 equipos, posiciones válidas
+const laliga = JSON.parse((await import('node:fs')).readFileSync('./data/laliga.json', 'utf8'));
+assert.equal(laliga.equipos.length, 20);
+assert.ok(laliga.equipos.every((e) => e.jugadores.length > 15 && e.jugadores.every((j) => ['POR', 'DEF', 'MED', 'DEL'].includes(j.p))));
 console.log('OK');

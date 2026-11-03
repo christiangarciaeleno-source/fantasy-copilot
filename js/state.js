@@ -1,6 +1,12 @@
 // Modo privado / almacenamiento bloqueado: getItem puede lanzar; se usa el valor por defecto.
 const get = (k, d = '') => { try { return localStorage.getItem(k) ?? d; } catch { return d; } };
 
+const emptyTeam = () => ({ saldo: 0, plantilla: [], mercado: [] });
+export const hasTeam = (t) => Boolean(t.saldo || t.plantilla.length || t.mercado.length);
+function loadTeam() {
+  try { return { ...emptyTeam(), ...JSON.parse(get('fc_team', 'null')) }; } catch { return emptyTeam(); } // corrupto: equipo vacío
+}
+
 export const STATE = {
   engine: get('fc_engine') === 'openrouter' ? 'openrouter' : 'gemini',
   orKey: get('fc_or_key'),
@@ -9,7 +15,8 @@ export const STATE = {
   inputs: [], // capturas { mime, b64, url } (url = miniatura) o textos copiados { text }
   deferredPrompt: null,
   data: null, // último análisis (formato v2: saldo, once, ventas, compras, consejos...)
-  history: [] // un análisis por fecha, los últimos HISTORY_MAX: [{ fecha, data }]
+  history: [], // un análisis por fecha, los últimos HISTORY_MAX: [{ fecha, data }]
+  team: loadTeam() // lo que el usuario edita a mano: { saldo, plantilla: [...], mercado: [...] }
 };
 
 const HISTORY_MAX = 30;
@@ -32,6 +39,8 @@ export function saveLast(data) {
 
 // El análisis más reciente guardado (no el que se esté viendo): es el contexto del seguimiento.
 export const latestData = () => STATE.history.at(-1)?.data ?? STATE.data;
+
+export const saveTeam = () => localStorage.setItem('fc_team', JSON.stringify(STATE.team));
 
 export function loadHistory() {
   try {
