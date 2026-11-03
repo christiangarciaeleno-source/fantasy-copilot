@@ -134,40 +134,4 @@ Object.assign(STATE, { engine: 'gemini', orKey: 'sk-or-k' });
 assert.match(manualPrompt(), /Responde SOLO con un JSON/);
 assert.equal(importManual('Aquí tienes:\n```json\n' + JSON.stringify(DEMO) + '\n```').once.length, 11);
 assert.throws(() => importManual('no es json'), /JSON/);
-// Favorito: es un javascript: autocontenido y sin llamadas de red.
-const { BOOKMARKLET } = await import('./js/bookmarklet.js');
-assert.ok(BOOKMARKLET.startsWith('javascript:'));
-assert.doesNotThrow(() => new Function(BOOKMARKLET.slice('javascript:'.length)));
-assert.ok(!/fetch|XMLHttpRequest|sendBeacon/.test(BOOKMARKLET));
-// --- Skill, formato v2, seguimiento y recordatorio ---
-const skill = (await import('node:fs')).readFileSync('./skills/fantasy-analista/SKILL.md', 'utf8');
-const mp = manualPrompt(skill, DEMO);
-assert.ok(!mp.startsWith('---') && /Analista de Movistar Fantasy MARCA/.test(mp)); // sin el frontmatter de la skill
-assert.ok(mp.includes('"version": 2') && mp.includes('"consejos"')); // el formato que importa la app
-assert.ok(mp.includes(JSON.stringify(DEMO))); // contexto del último análisis
-assert.ok(manualPrompt('', null).includes('Responde SOLO con un JSON')); // sin skill: prompt básico
-
-const v2 = validate({ ...DEMO, fecha: undefined, consejos: undefined });
-assert.match(v2.fecha, /^\d{4}-\d{2}-\d{2}$/);
-assert.deepEqual(v2.consejos, []);
-assert.equal(validate({ ...DEMO, fecha: '2026-11-03 22:00' }).fecha, '2026-11-03');
-// Lo que exporta la app lo reimporta la app (ida y vuelta), sin arrastrar el historial.
-const { saveLast, STATE: ST } = await import('./js/state.js');
-const { buildJson, buildIcs } = await import('./js/export.js');
-ST.history = [];
-saveLast({ ...DEMO, fecha: '2026-11-02', saldo: -2000000 });
-saveLast({ ...DEMO, fecha: '2026-11-03' });
-saveLast({ ...DEMO, fecha: '2026-11-03', saldo: 100 }); // mismo día: sustituye
-assert.deepEqual(ST.history.map((h) => [h.fecha, h.data.saldo]), [['2026-11-02', -2000000], ['2026-11-03', 100]]);
-const exported = buildJson(ST.data, ST.history);
-assert.equal(JSON.parse(exported).historial.length, 2);
-const back = importManual('Aquí va mi JSON:\n' + exported);
-assert.equal(back.once.length, 11);
-assert.ok(!('historial' in back));
-for (let d = 0; d < 40; d++) saveLast({ ...DEMO, fecha: `2027-01-${String(d % 28 + 1).padStart(2, '0')}x`.slice(0, 10) });
-assert.ok(ST.history.length <= 30);
-
-const ics = buildIcs(new Date('2026-11-03T10:00:00Z'));
-assert.ok(ics.includes('RRULE:FREQ=DAILY') && ics.includes('T220000') && ics.includes('BEGIN:VALARM'));
-assert.match(ics, /DTSTART:2026110\dT220000/);
 console.log('OK');

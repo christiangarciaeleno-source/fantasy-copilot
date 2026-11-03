@@ -6,7 +6,6 @@ export const STATE = {
   orKey: get('fc_or_key'),
   geminiKey: get('fc_gemini_key'),
   model: /flash/.test(get('fc_model')) ? get('fc_model') : 'gemini-2.5-flash', // Pro (o un valor viejo) es lento y casi sin cuota gratis
-  scoring: get('fc_scoring', 'mixta'),
   inputs: [], // capturas { mime, b64, url } (url = miniatura) o textos copiados { text }
   deferredPrompt: null,
   data: null, // último análisis (formato v2: saldo, once, ventas, compras, consejos...)
@@ -20,7 +19,6 @@ export function saveSettings() {
   localStorage.setItem('fc_or_key', STATE.orKey);
   localStorage.setItem('fc_gemini_key', STATE.geminiKey);
   localStorage.setItem('fc_model', STATE.model);
-  localStorage.setItem('fc_scoring', STATE.scoring);
 }
 
 export function saveLast(data) {

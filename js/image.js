@@ -60,7 +60,7 @@ export const cleanText = (text) => text.replace(/[\w.+-]+@[\w-]+\.[\w.]+/g, '[em
 
 export function addText(text) {
   const clean = cleanText(text);
-  if (clean.length < 30) return toast('El portapapeles no tiene texto del Fantasy: usa el favorito en la web', '⚠️');
+  if (clean.length < 30) return toast('No hay texto en el portapapeles: cópialo primero', '⚠️');
   if (STATE.inputs.length >= MAX) return toast(`Máximo ${MAX} entradas: borra alguna para añadir otra`, '⚠️');
   STATE.inputs.push({ text: clean });
   renderImages();

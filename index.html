@@ -3,17 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Fantasy Copilot Pro | MARCA & LaLiga</title>
+  <title>Fantasy Copilot | LALIGA Fantasy</title>
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="theme-color" content="#5e72e4">
+  <meta name="theme-color" content="#0d0d14">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="app.css">
 </head>
 <body class="text-argon-dark font-sans flex flex-col min-h-screen">
@@ -36,7 +36,7 @@
         <div>
           <div class="flex items-center gap-2">
             <h1 class="text-white font-extrabold text-xl tracking-tight">Fantasy Copilot</h1>
-            <span class="bg-white/20 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider backdrop-blur-sm">MARCA</span>
+            <span class="bg-white/20 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider backdrop-blur-sm">LALIGA</span>
           </div>
           <p class="text-white/85 text-xs font-semibold">Asistente Táctico & Financiero de LaLiga</p>
         </div>
@@ -105,9 +105,9 @@
             <span>📋</span> Pegar captura
           </button>
           <button onclick="pasteText()" class="flex-1 bg-gray-100 hover:bg-gray-200 active:scale-95 text-argon-dark font-bold py-2.5 px-3 rounded-xl text-xs transition flex items-center justify-center gap-2 border border-gray-200 shadow-sm">
-            <span>📝</span> Pegar texto del Fantasy
+            <span>📝</span> Pegar texto
           </button>
-          <button id="btnAnalyze" onclick="runAnalysis()" class="flex-1 bg-argon-primary hover:bg-[#4a5fcd] active:scale-95 text-white font-bold py-3 px-4 rounded-xl shadow-argon-sm transition flex items-center justify-center gap-2">
+          <button id="btnAnalyze" onclick="runAnalysis()" class="flex-1 bg-argon-primary hover:bg-[#e63d37] active:scale-95 text-white font-bold py-3 px-4 rounded-xl shadow-argon-sm transition flex items-center justify-center gap-2">
             <span id="analyzeSpinner" class="hidden argon-spinner"></span>
             <span id="analyzeIcon">⚡</span>
             <span id="analyzeLabel" class="text-xs tracking-wide uppercase font-extrabold">Analizar con IA</span>
@@ -115,16 +115,6 @@
           <button onclick="loadCompleteDemo()" class="w-full text-center text-[11px] font-bold text-argon-primary hover:underline py-1">
             ⚡ Cargar Demo Completa (Sin API Key)
           </button>
-          <details class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3">
-            <summary class="text-[11px] font-extrabold text-argon-dark cursor-pointer">Copiar datos desde la web del Fantasy (favorito)</summary>
-            <ol class="text-[10px] text-argon-muted mt-2 space-y-1 list-decimal pl-4">
-              <li>Pulsa "Copiar código del favorito".</li>
-              <li>En Chrome: abre cualquier página, menú ⋮ → ☆ guardar en favoritos, y luego ⋮ → Favoritos → mantén pulsado el favorito → Editar. Ponle el nombre <b>FantasyCopiar</b> y pega el código en la URL.</li>
-              <li>Entra en la web del Fantasy con tu sesión, abre Plantilla, Alineación o Mercado, escribe <b>FantasyCopiar</b> en la barra de direcciones y toca el favorito que sale (con la estrella).</li>
-              <li>Vuelve a esta app y pulsa "Pegar texto del Fantasy". Repite con cada pantalla.</li>
-            </ol>
-            <button onclick="copyBookmarklet()" class="w-full mt-2 bg-white hover:bg-gray-100 active:scale-95 text-argon-dark font-bold py-2 rounded-xl text-xs border border-gray-200 transition">📋 Copiar código del favorito</button>
-          </details>
           <details open class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3">
             <summary class="text-[11px] font-extrabold text-argon-dark cursor-pointer">Analista sin API: Gemini o Claude + JSON</summary>
             <ol class="text-[10px] text-argon-muted mt-2 space-y-1 list-decimal pl-4">
@@ -136,7 +126,7 @@
             <button onclick="exportJson()" class="w-full mt-2 bg-white hover:bg-gray-100 active:scale-95 text-argon-dark font-bold py-2 rounded-xl text-xs border border-gray-200 transition">📤 Copiar mi JSON (para Claude o Gemini)</button>
             <button onclick="downloadReminder()" class="w-full mt-2 bg-white hover:bg-gray-100 active:scale-95 text-argon-dark font-bold py-2 rounded-xl text-xs border border-gray-200 transition">⏰ Recordatorio diario 22:00 (calendario)</button>
             <textarea id="manualJson" rows="4" placeholder='Pega aquí el JSON de la IA...' class="w-full mt-2 bg-white border border-gray-200 rounded-xl px-3 py-2 text-[11px] font-mono text-argon-dark focus:outline-none focus:border-argon-primary"></textarea>
-            <button onclick="importManualJson()" class="w-full mt-2 bg-argon-primary hover:bg-[#4a5fcd] active:scale-95 text-white font-bold py-2 rounded-xl text-xs transition">⬇️ Importar respuesta</button>
+            <button onclick="importManualJson()" class="w-full mt-2 bg-argon-primary hover:bg-[#e63d37] active:scale-95 text-white font-bold py-2 rounded-xl text-xs transition">⬇️ Importar respuesta</button>
           </details>
         </div>
       </div>
@@ -171,7 +161,7 @@
                 <p id="pitchSubLabel" class="text-[11px] text-argon-muted font-semibold">Maximización de puntos xP</p>
                 <p id="aiSummary" class="text-[11px] text-argon-dark mt-1.5 leading-snug"></p>
               </div>
-              <span class="text-[10px] font-bold bg-argon-primary/10 text-argon-primary px-2.5 py-1 rounded-full uppercase">Movistar Fantasy MARCA</span>
+              <span class="text-[10px] font-bold bg-argon-primary/10 text-argon-primary px-2.5 py-1 rounded-full uppercase">LALIGA Fantasy</span>
             </div>
             <div class="tactical-pitch h-[520px] w-full flex flex-col justify-between py-6 px-3">
               <div class="pitch-line-center"></div>
@@ -271,24 +261,17 @@
         </div>
         <button onclick="testConnection()" class="w-full bg-white hover:bg-gray-100 active:scale-95 text-argon-dark font-bold py-2 rounded-xl text-xs border border-gray-200 transition">📡 Probar conexión</button>
         <p class="text-[10px] text-gray-400">La clave se guarda solo en este dispositivo (<code>localStorage</code>) y se envía directamente al proveedor elegido.</p>
-        <div>
-          <label class="block text-[11px] font-extrabold text-argon-muted uppercase tracking-wider mb-1.5">Sistema de Puntuación de tu Liga</label>
-          <select id="selectScoring" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-xs font-bold text-argon-dark focus:outline-none focus:border-argon-primary">
-            <option value="mixta">Mixto (SofaScore + Cronista MARCA)</option>
-            <option value="sofascore">Solo SofaScore (Estadística pura)</option>
-            <option value="cronistas">Solo Cronistas MARCA (Picas / Estrellas)</option>
-          </select>
-        </div>
+      </div>
       </div>
       <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-2.5">
         <button onclick="toggleSettingsModal()" class="px-4 py-2 text-xs font-bold text-gray-500 hover:text-gray-700">Cerrar</button>
-        <button onclick="saveAppSettings()" class="px-5 py-2 text-xs font-extrabold text-white bg-argon-primary hover:bg-[#4a5fcd] rounded-xl shadow-argon-sm transition">Guardar Ajustes</button>
+        <button onclick="saveAppSettings()" class="px-5 py-2 text-xs font-extrabold text-white bg-argon-primary hover:bg-[#e63d37] rounded-xl shadow-argon-sm transition">Guardar Ajustes</button>
       </div>
     </div>
   </div>
 
   <!-- Toast -->
-  <div id="toastNotification" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-argon-dark text-white px-5 py-2.5 rounded-full shadow-argon text-xs font-bold opacity-0 pointer-events-none transition-all duration-300 flex items-center gap-2">
+  <div id="toastNotification" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-[#2a2a38] border border-white/10 text-white px-5 py-2.5 rounded-full shadow-argon text-xs font-bold opacity-0 pointer-events-none transition-all duration-300 flex items-center gap-2">
     <span id="toastIcon">ℹ️</span>
     <span id="toastMessage">Notificación</span>
   </div>

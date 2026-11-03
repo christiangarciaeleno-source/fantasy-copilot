@@ -1,4 +1,4 @@
-# Estado del proyecto – Fantasy Copilot Pro
+# Estado del proyecto – Fantasy Copilot (para LALIGA Fantasy, app oficial)
 
 Última actualización: 2026-11-02
 
@@ -19,7 +19,6 @@
 ├── js/render.js            141   Pizarra, saldo, mercado, ventas, resumen
 ├── js/openrouter.js        67   Motor OpenRouter (modelos gratuitos con visión, con reserva)
 ├── js/image.js              99   Entradas: capturas (máx. 4) y texto pegado
-├── js/bookmarklet.js        19   Favorito que copia el texto de la web del Fantasy
 ├── js/state.js                53   STATE + persistencia localStorage
 ├── js/export.js              67   Resumen con emojis para WhatsApp/Telegram
 ├── js/demo.js                29   Datos demo
@@ -43,6 +42,7 @@ Regla: ningún archivo (salvo `app.css`, generado) supera 300 líneas (máximo a
 
 ## 3. Cómo funciona
 
+- Juego: **LALIGA Fantasy** (app oficial de LALIGA; solo móvil, sin web de gestión), liga no premium (sin capitán, banquillo ni entrenador). La skill marca qué reglas están verificadas y cuáles no.
 - Entradas (máx. 4, mezclables): capturas (reducidas a 1600 px JPEG) o texto pegado (emails sustituidos por `[email]`, máx. 20.000 caracteres).
 - Análisis: una llamada a Gemini con esquema JSON forzado (`saldo`, `resumen`, `once` de 11, `ventas_recomendadas`, `compras_mercado`).
   Transporte: 2 intentos por modelo (`gemini-2.5-flash` → reserva `gemini-2.5-flash-lite`), un timeout no se repite con el mismo modelo, tope total 100 s, sin "thinking" en 2.5 Flash, 404 → busca el Flash más nuevo y lo guarda (`fc_model`).
@@ -52,18 +52,18 @@ Regla: ningún archivo (salvo `app.css`, generado) supera 300 líneas (máximo a
 - JSON v2 (`version`, `fecha`, `jornada`, `liga`, `saldo`, `resumen`, `once`, `ventas_recomendadas`, `compras_mercado`, `consejos`): "Copiar mi JSON" exporta el último análisis + resumen del historial; "Importar respuesta" lo carga y alimenta el panel de **consejos** y el **seguimiento** (un análisis por día, últimos 30, `fc_hist`; pulsar un día lo muestra).
 - Recordatorio: botón "⏰ Recordatorio diario 22:00" descarga un `.ics` (evento diario con alarma) para el calendario del móvil. Además hay una tarea programada de Claude `revision-fantasy-22h` (22:00 diarias, solo con la app de escritorio abierta) que resume novedades públicas de LaLiga; no accede a la cuenta del Fantasy.
 - Modo manual (sin API): "Copiar prompt" + pegar el JSON de un chat de Gemini/Claude + "Importar respuesta".
-- Favorito (`js/bookmarklet.js`): copia el texto visible de la web del Fantasy en Chrome del móvil; se pega con "Pegar texto del Fantasy".
 - Persistencia: último análisis y ajustes en `localStorage`; el restaurado se valida al arrancar. La demo no pisa el análisis guardado.
 
 ## 4. Pendiente / no verificado
 
 - Ningún análisis completo con éxito con clave real todavía (primero cuota/facturación de Google, después timeouts). Usar "Probar conexión" en Ajustes para aislar el fallo.
-- El favorito no se ha probado contra la web real de MARCA (no se sabe si los datos salen como texto en el DOM).
 - Service Worker e instalación PWA sin verificar en el Pixel.
 - Seguridad: la clave vive en `localStorage` del origen `*.github.io`; no alojar otras páginas no fiables en la cuenta. Revocar cualquier clave pegada en chats.
 
 ## 5. Decisiones
 
+- Aspecto: tema oscuro con acento rojo, pizarra oscura con cartas claras (inspirado en la app oficial; sin logos ni marca de LALIGA). Se logra con tokens en `tailwind.config.js` + utilidades reasignadas en `styles.css`.
+- Se descartó el favorito de Chrome: LALIGA Fantasy no tiene web de gestión, solo la app del móvil.
 - Los datos personales de la liga no se suben al repositorio (es público): viven en el `localStorage` del móvil y en el JSON que el usuario copia.
 
 - Solo motores gratuitos (Gemini y OpenRouter): se eliminó el motor Claude (de pago), el grounding y la búsqueda en medios (sin probar, gastaba cuota y tiempo).

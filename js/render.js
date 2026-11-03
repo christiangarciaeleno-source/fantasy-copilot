@@ -28,16 +28,16 @@ function renderBalance(saldo, ventas) {
   $('kpiBalance').textContent = money(saldo);
   $('kpiBalance').className = `text-base md:text-lg font-extrabold ${neg ? 'text-argon-danger' : 'text-argon-success'} mt-0.5`;
   const tone = neg ? 'bg-rose-50 text-argon-danger' : 'bg-emerald-50 text-argon-success';
-  $('kpiBalanceBadge').textContent = neg ? 'NEGATIVO (-4 PTS)' : 'POSITIVO (OK)';
+  $('kpiBalanceBadge').textContent = neg ? 'SALDO NEGATIVO' : 'POSITIVO (OK)';
   $('kpiBalanceBadge').className = `inline-block text-[9px] font-bold px-1.5 py-0.5 rounded-full ${tone} mt-1`;
-  $('badgeSaleStatus').textContent = neg ? 'Venta Obligatoria' : 'Saldo OK';
+  $('badgeSaleStatus').textContent = neg ? 'Saldo negativo' : 'Saldo OK';
   $('badgeSaleStatus').className = `text-[10px] font-bold px-2 py-0.5 rounded-full ${tone}`;
 
   $('kpiAlertCount').textContent = ventas.length;
   $('kpiAlertSub').textContent = ventas.length ? 'Revisar cartera' : 'Sin ventas pendientes';
 
   $('salesContent').innerHTML = neg
-    ? `<p class="text-xs font-semibold text-argon-danger">Debes vender antes del viernes para puntuar:</p>${saleCards(ventas) || '<p class="text-xs text-argon-muted">La IA no propuso ventas: revisa tu plantilla.</p>'}`
+    ? `<p class="text-xs font-semibold text-argon-danger">Saldo negativo: resuélvelo antes del cierre de la jornada:</p>${saleCards(ventas) || '<p class="text-xs text-argon-muted">La IA no propuso ventas: revisa tu plantilla.</p>'}`
     : `<div class="p-3 bg-emerald-50/70 border border-emerald-100 rounded-xl text-center">
          <p class="text-xs font-bold text-argon-success">✓ Cuentas en orden para la jornada</p>
          <p class="text-[10px] text-argon-muted mt-1">No necesitas realizar ventas de urgencia.</p>
@@ -53,15 +53,16 @@ const saleCards = (ventas) => ventas.map((v) => `
     <span class="text-xs font-extrabold text-argon-success shrink-0">+${money(v.vm)}</span>
   </div>`).join('');
 
+// Carta clara con la nota (xP) en una esquina, verde si es titular seguro y ámbar si es duda.
 function pin(p) {
-  const border = p.titularidad_pct < 70 ? 'border-argon-warning' : 'border-white';
+  const doubt = p.titularidad_pct < 70;
   return `
-    <div class="flex flex-col items-center w-14">
-      <div class="relative w-10 h-10 rounded-full bg-white shadow-md border-2 ${border} flex items-center justify-center font-extrabold text-argon-dark text-xs">
-        ${esc(String(p.nombre ?? '?').slice(0, 2).toUpperCase())}
+    <div class="flex flex-col items-center w-[62px]">
+      <div class="relative w-full rounded-lg bg-[#f3f3f6] border-2 ${doubt ? 'border-argon-warning' : 'border-[#f3f3f6]'} shadow-md pt-3 pb-1 text-center">
+        <span class="absolute -top-2 -left-1.5 min-w-[24px] px-1 rounded text-[10px] font-extrabold text-white ${doubt ? 'bg-argon-warning' : 'bg-argon-success'}">${p.xp ? esc(p.xp) : '–'}</span>
+        <p class="text-[10px] font-extrabold text-[#14141d] truncate px-0.5">${esc(p.nombre)}</p>
+        <p class="text-[8px] font-bold text-[#6b6b80] truncate px-0.5">${esc(p.equipo)}${p.titularidad_pct < 100 ? ' · ' + esc(p.titularidad_pct) + '%' : ''}</p>
       </div>
-      <div class="mt-1 bg-black/65 backdrop-blur-sm px-1.5 py-0.5 rounded text-white text-[9px] font-bold text-center w-full truncate shadow-sm">${esc(p.nombre)}</div>
-      <span class="text-[8px] font-bold text-white/90 drop-shadow">${p.xp ? esc(p.xp) + ' xP' : ''}${p.titularidad_pct < 100 ? ' · ' + esc(p.titularidad_pct) + '%' : ''}</span>
     </div>`;
 }
 

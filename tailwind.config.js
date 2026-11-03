@@ -2,12 +2,12 @@ module.exports = {
   content: ['./index.html', './app.js', './js/*.js'],
   theme: {
     extend: {
-      fontFamily: { sans: ['"Open Sans"', 'sans-serif'] },
+      fontFamily: { sans: ['"Open Sans"', 'sans-serif'], display: ['"Barlow Condensed"', '"Open Sans"', 'sans-serif'] },
       colors: {
         argon: {
-          primary: '#5e72e4', secondary: '#f4f5f7', success: '#2dce89', info: '#11cdef',
-          warning: '#fb6340', danger: '#f5365c', dark: '#172b4d', muted: '#8898aa',
-          light: '#ced4da', bg: '#f8f9fe'
+          primary: '#ff4b44', secondary: '#232330', success: '#2dce89', info: '#11cdef',
+          warning: '#ffb020', danger: '#ff5a67', dark: '#f2f2f7', muted: '#9a9ab0',
+          light: '#34344a', bg: '#0d0d14'
         }
       },
       boxShadow: {

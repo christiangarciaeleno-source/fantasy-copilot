@@ -4,7 +4,7 @@ import { formation, totalXp } from './render.js';
 
 export function buildSummary(d) {
   const lines = [
-    '⚽ *FANTASY MARCA - PLAN DE JORNADA* ⚽', '',
+    '⚽ *LALIGA FANTASY - PLAN DE JORNADA* ⚽', '',
     `📊 *Esquema:* 1-${formation(d.once)}`,
     `💰 *Saldo:* ${money(d.saldo)} ${d.saldo < 0 ? '🔴' : '🟢'}`,
     ...(d.resumen ? [`🧠 ${d.resumen}`] : []), '',

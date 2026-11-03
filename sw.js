@@ -1,8 +1,8 @@
 // Subir CACHE al cambiar cualquier asset para invalidar la caché anterior.
-const CACHE = 'fantasy-pro-v19';
+const CACHE = 'fantasy-pro-v21';
 const PRECACHE = [
   './', 'index.html', 'app.css', 'app.js', 'manifest.json', 'icon.svg', 'icon-192.png', 'icon-512.png',
-  'js/util.js', 'js/state.js', 'js/ai.js', 'js/render.js', 'js/demo.js', 'js/export.js', 'js/image.js', 'js/bookmarklet.js', 'js/openrouter.js', 'skills/fantasy-analista/SKILL.md'
+  'js/util.js', 'js/state.js', 'js/ai.js', 'js/render.js', 'js/demo.js', 'js/export.js', 'js/image.js', 'js/openrouter.js', 'skills/fantasy-analista/SKILL.md'
 ];
 
 // reload: salta la caché HTTP de Pages (max-age 600) al precachear.

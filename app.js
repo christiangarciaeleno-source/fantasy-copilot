@@ -5,7 +5,6 @@ import { renderAll } from './js/render.js';
 import { DEMO } from './js/demo.js';
 import { exportSummary, exportJson, downloadReminder } from './js/export.js';
 import { setupDragAndDrop, removeImage, pasteFromClipboard, pasteText } from './js/image.js';
-import { copyBookmarklet } from './js/bookmarklet.js';
 
 // --- Navegación ---
 function switchTab(tab) {
@@ -47,7 +46,6 @@ function loadSettingsForm() {
   // El fallback puede haber guardado un modelo que no está en la lista: se añade para no guardar ''.
   if (![...sel.options].some((o) => o.value === STATE.model)) sel.add(new Option(STATE.model, STATE.model));
   sel.value = STATE.model;
-  $('selectScoring').value = STATE.scoring;
 }
 
 function saveAppSettings() {
@@ -55,8 +53,7 @@ function saveAppSettings() {
     engine: $('selectEngine').value,
     orKey: $('inputOrKey').value.trim(),
     geminiKey: $('inputGeminiKey').value.trim(),
-    model: $('selectModel').value,
-    scoring: $('selectScoring').value
+    model: $('selectModel').value
   });
   saveSettings();
   toggleSettingsModal();
@@ -177,7 +174,7 @@ const dismissPWA = () => $('pwaInstallBanner').classList.add('hidden');
 // Los handlers inline (onclick) del HTML necesitan globals.
 Object.assign(window, {
   testConnection, syncEngineFields, switchTab, toggleSettingsModal, saveAppSettings, runAnalysis,
-  loadCompleteDemo, loadSnapshot, exportJson, downloadReminder, copyManualPrompt, importManualJson, installPWA, dismissPWA, exportSummary, removeImage, pasteFromClipboard, pasteText, copyBookmarklet
+  loadCompleteDemo, loadSnapshot, exportJson, downloadReminder, copyManualPrompt, importManualJson, installPWA, dismissPWA, exportSummary, removeImage, pasteFromClipboard, pasteText
 });
 
 // --- Arranque ---

@@ -36,14 +36,14 @@ export const SCHEMA = obj({
   }))
 });
 
-const prompt = (hint = '') => `Eres el analista de élite de Movistar Fantasy MARCA (LaLiga española).
+const prompt = (hint = '') => `Eres el analista de élite de LALIGA Fantasy (app oficial de LALIGA).
 Recibes de 1 a 4 entradas del usuario (capturas y/o texto copiado de la web del Fantasy), en cualquier orden: su plantilla completa, su alineación actual, el mercado y/o su saldo. Identifica qué es cada una y cruza la información.
-Sistema de puntuación: ${STATE.scoring}.
+Puntuación oficial: estadísticas OPTA más puntos DAZN (0-4). La liga no es premium: sin capitán, banquillo ni entrenador. Hay clausulazos y cada jornada se puede blindar a un jugador.
 Reglas: todos los importes (saldo, vm, puja_sugerida) en euros como número entero (1,85 M€ = 1850000).
 "once": el mejor once posible con los jugadores de la PLANTILLA (si se ve la alineación actual, mejórala), 11 jugadores con formación válida (sin capitán).
 "resumen": 2-3 frases en español valorando la alineación actual y qué cambios haces y por qué (vacío si no se ve la alineación).
 "consejos": hasta 6 acciones concretas ordenadas por prioridad (alta, media, baja).
-"ventas_recomendadas": jugadores de la plantilla; obligatorias si saldo < 0 (el saldo debe ser >= 0 el viernes); si no, solo ventas claramente rentables.
+"ventas_recomendadas": jugadores de la plantilla; prioritarias si saldo < 0; si no, solo ventas claramente rentables.
 "compras_mercado": fichajes del mercado visible con puja sugerida que mejoren la plantilla; vacío si no se ve el mercado.
 titularidad_pct va de 0 a 100 y xp son los puntos esperados de la jornada.
 Si un dato no aparece en las entradas, estímalo con criterio y mantén listas vacías en lugar de inventar jugadores.${hint && `
@@ -148,7 +148,7 @@ const stripFrontmatter = (md) => md.replace(/^---[\s\S]*?---\s*/, '');
 
 export const manualPrompt = (skill = '', previous = null) => (skill
   ? `${stripFrontmatter(skill)}\n\n---\nTAREA: analiza lo que adjunto (capturas y/o texto copiado de mi Fantasy) con estas instrucciones y responde con tu comentario y el bloque JSON del formato indicado.${previous ? `\nMi último análisis, para el seguimiento (JSON):\n${JSON.stringify(previous)}` : ''}`
-  : jsonPrompt('', '\nAntes de responder, busca en la web (Sofascore, Marca, AS, Transfermarkt) lesiones, sancionados, alineaciones probables y forma reciente de los jugadores de la captura, y úsalo.'));
+  : jsonPrompt('', '\nAntes de responder, busca en la web (Jornada Perfecta, Comuniate, AsesoríasFantasy, Sofascore, Marca, AS) lesiones, sancionados, alineaciones probables y forma reciente de los jugadores de la captura, y úsalo.'));
 
 // El historial del JSON exportado es solo contexto para la IA: el de la app es local.
 export const importManual = (text) => { const { historial, ...d } = extractJson(text); return validate(d); };
