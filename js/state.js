@@ -9,8 +9,11 @@ export const STATE = {
   scoring: get('fc_scoring', 'mixta'),
   inputs: [], // capturas { mime, b64, url } (url = miniatura) o textos copiados { text }
   deferredPrompt: null,
-  data: null // último análisis: { saldo, once, ventas_recomendadas, compras_mercado }
+  data: null, // último análisis (formato v2: saldo, once, ventas, compras, consejos...)
+  history: [] // un análisis por fecha, los últimos HISTORY_MAX: [{ fecha, data }]
 };
+
+const HISTORY_MAX = 30;
 
 export function saveSettings() {
   localStorage.setItem('fc_engine', STATE.engine);
@@ -23,6 +26,20 @@ export function saveSettings() {
 export function saveLast(data) {
   STATE.data = data;
   localStorage.setItem('fc_last', JSON.stringify({ ts: Date.now(), data }));
+  // Un análisis por día: reimportar el mismo día sustituye al anterior en vez de apilar duplicados.
+  STATE.history = [...STATE.history.filter((h) => h.fecha !== data.fecha), { fecha: data.fecha, data }]
+    .sort((a, b) => a.fecha.localeCompare(b.fecha)).slice(-HISTORY_MAX);
+  localStorage.setItem('fc_hist', JSON.stringify(STATE.history));
+}
+
+// El análisis más reciente guardado (no el que se esté viendo): es el contexto del seguimiento.
+export const latestData = () => STATE.history.at(-1)?.data ?? STATE.data;
+
+export function loadHistory() {
+  try {
+    const h = JSON.parse(localStorage.getItem('fc_hist'));
+    if (Array.isArray(h)) STATE.history = h.filter((x) => x?.fecha && x?.data);
+  } catch { /* historial corrupto: se parte de cero */ }
 }
 
 export function loadLast() {

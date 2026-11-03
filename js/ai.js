@@ -21,6 +21,7 @@ const list = (items, extra = {}) => ({ type: 'ARRAY', items, ...extra });
 export const SCHEMA = obj({
   saldo: { type: 'NUMBER', description: 'Saldo actual en euros; negativo si hay deuda' },
   resumen: { type: 'STRING', description: 'Valoración de la alineación actual y cambios propuestos' },
+  consejos: list(obj({ prioridad: { type: 'STRING', enum: ['alta', 'media', 'baja'] }, texto: S }), { description: 'Máx. 6 acciones concretas, de más a menos prioritaria' }),
   once: list(obj({
     dorsal: { type: 'INTEGER' }, nombre: S,
     posicion: { type: 'STRING', enum: ['POR', 'DEF', 'MED', 'DEL'] },
@@ -41,6 +42,7 @@ Sistema de puntuación: ${STATE.scoring}.
 Reglas: todos los importes (saldo, vm, puja_sugerida) en euros como número entero (1,85 M€ = 1850000).
 "once": el mejor once posible con los jugadores de la PLANTILLA (si se ve la alineación actual, mejórala), 11 jugadores con formación válida (sin capitán).
 "resumen": 2-3 frases en español valorando la alineación actual y qué cambios haces y por qué (vacío si no se ve la alineación).
+"consejos": hasta 6 acciones concretas ordenadas por prioridad (alta, media, baja).
 "ventas_recomendadas": jugadores de la plantilla; obligatorias si saldo < 0 (el saldo debe ser >= 0 el viernes); si no, solo ventas claramente rentables.
 "compras_mercado": fichajes del mercado visible con puja sugerida que mejoren la plantilla; vacío si no se ve el mercado.
 titularidad_pct va de 0 a 100 y xp son los puntos esperados de la jornada.
@@ -134,16 +136,22 @@ const callGemini = async (inputs, hint) => extractJson(await gemini({
 }));
 
 // Modo manual: el usuario pega el prompt (con sus capturas) en un chat gratuito (Gemini, Claude...) y trae el JSON de vuelta.
-const SHAPE = '{"saldo":-1850000,"resumen":"","once":[{"dorsal":1,"nombre":"","posicion":"POR","equipo":"","titularidad_pct":90,"xp":5.5}],"ventas_recomendadas":[{"nombre":"","vm":0,"motivo":""}],"compras_mercado":[{"nombre":"","vm":0,"puja_sugerida":0,"tipo":"especulacion"}]}';
+const SHAPE = '{"saldo":-1850000,"resumen":"","consejos":[{"prioridad":"alta","texto":""}],"once":[{"dorsal":1,"nombre":"","posicion":"POR","equipo":"","titularidad_pct":90,"xp":5.5}],"ventas_recomendadas":[{"nombre":"","vm":0,"motivo":""}],"compras_mercado":[{"nombre":"","vm":0,"puja_sugerida":0,"tipo":"especulacion"}]}';
 
 // Para quien no tiene esquema forzado (chat manual, OpenRouter): se pide el JSON en el propio prompt.
 const jsonPrompt = (hint, extra = '') => `${prompt(hint)}${extra}
 Responde SOLO con un JSON válido, sin texto extra ni explicaciones, con esta forma (once = 11 jugadores; posicion: POR, DEF, MED o DEL; tipo: especulacion, chollo o burbuja):
 ${SHAPE}`;
 
-export const manualPrompt = () => jsonPrompt('', '\nAntes de responder, busca en la web (Sofascore, Marca, AS, Transfermarkt) lesiones, sancionados, alineaciones probables y forma reciente de los jugadores de la captura, y úsalo.');
+// Con la skill (js carga skills/fantasy-analista/SKILL.md) el chat recibe el método, las reglas y el formato; sin ella, el prompt básico.
+const stripFrontmatter = (md) => md.replace(/^---[\s\S]*?---\s*/, '');
 
-export const importManual = (text) => validate(extractJson(text));
+export const manualPrompt = (skill = '', previous = null) => (skill
+  ? `${stripFrontmatter(skill)}\n\n---\nTAREA: analiza lo que adjunto (capturas y/o texto copiado de mi Fantasy) con estas instrucciones y responde con tu comentario y el bloque JSON del formato indicado.${previous ? `\nMi último análisis, para el seguimiento (JSON):\n${JSON.stringify(previous)}` : ''}`
+  : jsonPrompt('', '\nAntes de responder, busca en la web (Sofascore, Marca, AS, Transfermarkt) lesiones, sancionados, alineaciones probables y forma reciente de los jugadores de la captura, y úsalo.'));
+
+// El historial del JSON exportado es solo contexto para la IA: el de la app es local.
+export const importManual = (text) => { const { historial, ...d } = extractJson(text); return validate(d); };
 
 export function extractJson(text) {
   const m = text.replace(/```json|```/g, '').match(/\{[\s\S]*\}/);
@@ -169,7 +177,8 @@ export function validate(r) {
   if (once.length !== 11 || once.some((p) => !['POR', 'DEF', 'MED', 'DEL'].includes(p.posicion))) {
     throw new Error('La IA no devolvió 11 jugadores válidos: reintenta o usa otra captura');
   }
-  return { ...r, once, resumen: r.resumen ?? '', ventas_recomendadas: r.ventas_recomendadas ?? [], compras_mercado: r.compras_mercado ?? [] };
+  const fecha = /^\d{4}-\d{2}-\d{2}/.test(r.fecha) ? r.fecha.slice(0, 10) : new Date().toLocaleDateString('sv-SE'); // sv-SE = AAAA-MM-DD local
+  return { ...r, fecha, consejos: Array.isArray(r.consejos) ? r.consejos : [], once, resumen: r.resumen ?? '', ventas_recomendadas: r.ventas_recomendadas ?? [], compras_mercado: r.compras_mercado ?? [] };
 }
 
 const HINT = 'tu respuesta anterior no era válida. Devuelve SOLO el JSON, con EXACTAMENTE 11 jugadores en "once" y posicion POR, DEF, MED o DEL.';

@@ -7,24 +7,25 @@
 ```
 .
 ├── index.html              298   UI Argon (sin lógica)
-├── app.js                  180   Entrada: tabs, ajustes, análisis, modo manual, PWA
-├── sw.js                     37   Service Worker (precache + stale-while-revalidate)
+├── app.js                  191   Entrada: tabs, ajustes, análisis, modo manual, PWA
+├── sw.js                      37   Service Worker (precache + stale-while-revalidate)
 ├── manifest.json            15   standalone, portrait, #5e72e4
 ├── styles.css               70   CSS propio (fuente de app.css)
 ├── app.css                   1   CSS generado (Tailwind CLI + styles.css); no editar
 ├── tailwind.config.js       21   Tema Tailwind para build-css.sh
 ├── build-css.sh              5   Regenera app.css
 ├── icon.svg                  1   Icono vectorial
-├── js/ai.js                192   Gemini: transporte con reintentos/reserva, prompt, esquema, validación, modo manual
-├── js/render.js            115   Pizarra, saldo, mercado, ventas, resumen
+├── js/ai.js                201   Gemini: transporte con reintentos/reserva, prompt, esquema, validación, modo manual
+├── js/render.js            141   Pizarra, saldo, mercado, ventas, resumen
 ├── js/openrouter.js        67   Motor OpenRouter (modelos gratuitos con visión, con reserva)
 ├── js/image.js              99   Entradas: capturas (máx. 4) y texto pegado
 ├── js/bookmarklet.js        19   Favorito que copia el texto de la web del Fantasy
-├── js/state.js               36   STATE + persistencia localStorage
-├── js/export.js             32   Resumen con emojis para WhatsApp/Telegram
-├── js/demo.js               24   Datos demo
+├── js/state.js                53   STATE + persistencia localStorage
+├── js/export.js              67   Resumen con emojis para WhatsApp/Telegram
+├── js/demo.js                29   Datos demo
 ├── js/util.js                31   $, esc, money, haptic, toast
-├── test.mjs                107   Tests (node test.mjs)
+├── test.mjs                173   Tests (node test.mjs)
+├── skills/fantasy-analista/SKILL.md   84   Skill del analista (Claude Code) y fuente de las instrucciones para Gemini/Claude
 ├── icon-192.png / icon-512.png   Iconos PWA
 ├── .gitignore
 └── ESTADO_PROYECTO.md            Este archivo
@@ -47,6 +48,9 @@ Regla: ningún archivo (salvo `app.css`, generado) supera 300 líneas (máximo a
   Transporte: 2 intentos por modelo (`gemini-2.5-flash` → reserva `gemini-2.5-flash-lite`), un timeout no se repite con el mismo modelo, tope total 100 s, sin "thinking" en 2.5 Flash, 404 → busca el Flash más nuevo y lo guarda (`fc_model`).
   Respuesta normalizada (posición, "85%", "5,5", 0,9 → 90) y un reintento con pista si el once no es válido.
 - Motores (Ajustes): Google Gemini o OpenRouter (modelos `:free` con visión: se pide la lista en cada análisis y se prueban los 3 mejores; sin clave pegada de pago; ~50 peticiones/día sin créditos; hay que activar los endpoints gratuitos en openrouter.ai/settings/privacy). CORS de OpenRouter comprobado desde el navegador; el flujo completo con clave real sin probar.
+- **Analista sin API (lo principal):** `skills/fantasy-analista/SKILL.md` es la skill (método de análisis, reglas del juego, principios de especialistas con fuentes, formato JSON v2). En Claude Code se enlaza desde `.claude/skills/` (symlink, ignorado por git). La app la carga y la antepone en "Copiar prompt" junto al último análisis guardado, para pegarlo en gemini.google.com o claude.ai.
+- JSON v2 (`version`, `fecha`, `jornada`, `liga`, `saldo`, `resumen`, `once`, `ventas_recomendadas`, `compras_mercado`, `consejos`): "Copiar mi JSON" exporta el último análisis + resumen del historial; "Importar respuesta" lo carga y alimenta el panel de **consejos** y el **seguimiento** (un análisis por día, últimos 30, `fc_hist`; pulsar un día lo muestra).
+- Recordatorio: botón "⏰ Recordatorio diario 22:00" descarga un `.ics` (evento diario con alarma) para el calendario del móvil. Además hay una tarea programada de Claude `revision-fantasy-22h` (22:00 diarias, solo con la app de escritorio abierta) que resume novedades públicas de LaLiga; no accede a la cuenta del Fantasy.
 - Modo manual (sin API): "Copiar prompt" + pegar el JSON de un chat de Gemini/Claude + "Importar respuesta".
 - Favorito (`js/bookmarklet.js`): copia el texto visible de la web del Fantasy en Chrome del móvil; se pega con "Pegar texto del Fantasy".
 - Persistencia: último análisis y ajustes en `localStorage`; el restaurado se valida al arrancar. La demo no pisa el análisis guardado.
@@ -59,6 +63,8 @@ Regla: ningún archivo (salvo `app.css`, generado) supera 300 líneas (máximo a
 - Seguridad: la clave vive en `localStorage` del origen `*.github.io`; no alojar otras páginas no fiables en la cuenta. Revocar cualquier clave pegada en chats.
 
 ## 5. Decisiones
+
+- Los datos personales de la liga no se suben al repositorio (es público): viven en el `localStorage` del móvil y en el JSON que el usuario copia.
 
 - Solo motores gratuitos (Gemini y OpenRouter): se eliminó el motor Claude (de pago), el grounding y la búsqueda en medios (sin probar, gastaba cuota y tiempo).
 - Sin capitán (es premium).

@@ -2,6 +2,7 @@ const j = (dorsal, nombre, posicion, equipo, titularidad_pct, xp) =>
   ({ dorsal, nombre, posicion, equipo, titularidad_pct, xp });
 
 export const DEMO = {
+  fecha: '2026-11-03',
   saldo: -1850000,
   resumen: 'Tu once actual es sólido arriba, pero Griezmann es duda: se sube a Lamine y Vinícius y se vende a Brahim para saldar la deuda.',
   once: [
@@ -15,6 +16,10 @@ export const DEMO = {
   ],
   ventas_recomendadas: [
     { nombre: 'Brahim Díaz', vm: 2400000, motivo: 'Suplente habitual con alto valor para saldar la deuda de 1,85 M€' }
+  ],
+  consejos: [
+    { prioridad: 'alta', texto: 'Vende a Brahim Díaz antes del cierre para dejar el saldo en positivo', fecha_limite: 'viernes 21:00' },
+    { prioridad: 'media', texto: 'Griezmann es duda: ten un suplente de ataque en el banquillo' }
   ],
   compras_mercado: [
     { nombre: 'Bryan Zaragoza', vm: 5800000, puja_sugerida: 6150000, tipo: 'especulacion' },

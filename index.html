@@ -18,7 +18,6 @@
 </head>
 <body class="text-argon-dark font-sans flex flex-col min-h-screen">
 
-  <!-- PWA Install Banner -->
   <div id="pwaInstallBanner" class="hidden bg-emerald-600 text-white px-4 py-2.5 shadow-md flex items-center justify-between z-50 text-xs font-semibold">
     <div class="flex items-center gap-2">
       <span class="text-base">📲</span>
@@ -55,7 +54,6 @@
 
   <main class="max-w-5xl mx-auto w-full px-4 md:px-8 -mt-16 relative z-10 flex-1 flex flex-col gap-6">
 
-    <!-- KPI cards -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
       <div class="bg-white rounded-xl p-3.5 shadow-argon-sm border border-gray-100 flex items-center justify-between">
         <div>
@@ -91,7 +89,6 @@
       </div>
     </div>
 
-    <!-- Screenshot upload & actions -->
     <div class="bg-white rounded-2xl shadow-argon p-4 md:p-5 border border-gray-100">
       <div class="flex flex-col md:flex-row gap-4 items-stretch md:items-center">
         <div id="dropzoneBox" class="flex-1 border-2 border-dashed border-gray-200 hover:border-argon-primary rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer bg-gray-50/60 transition group relative min-h-[110px]">
@@ -128,14 +125,16 @@
             </ol>
             <button onclick="copyBookmarklet()" class="w-full mt-2 bg-white hover:bg-gray-100 active:scale-95 text-argon-dark font-bold py-2 rounded-xl text-xs border border-gray-200 transition">📋 Copiar código del favorito</button>
           </details>
-          <details class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3">
-            <summary class="text-[11px] font-extrabold text-argon-dark cursor-pointer">Modo manual (sin API Key ni cuotas)</summary>
+          <details open class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3">
+            <summary class="text-[11px] font-extrabold text-argon-dark cursor-pointer">Analista sin API: Gemini o Claude + JSON</summary>
             <ol class="text-[10px] text-argon-muted mt-2 space-y-1 list-decimal pl-4">
-              <li>Pulsa "Copiar prompt".</li>
-              <li>Abre gemini.google.com (o claude.ai), sube tu captura y pega el prompt.</li>
-              <li>Copia el JSON que responda y pégalo aquí abajo.</li>
+              <li>"Copiar prompt": lleva la skill del analista y tu último análisis.</li>
+              <li>Pégalo en gemini.google.com o claude.ai con tus capturas o el texto del Fantasy.</li>
+              <li>Copia el JSON de la respuesta y pégalo aquí. Verás consejos y seguimiento.</li>
             </ol>
             <button onclick="copyManualPrompt()" class="w-full mt-2 bg-white hover:bg-gray-100 active:scale-95 text-argon-dark font-bold py-2 rounded-xl text-xs border border-gray-200 transition">📋 Copiar prompt</button>
+            <button onclick="exportJson()" class="w-full mt-2 bg-white hover:bg-gray-100 active:scale-95 text-argon-dark font-bold py-2 rounded-xl text-xs border border-gray-200 transition">📤 Copiar mi JSON (para Claude o Gemini)</button>
+            <button onclick="downloadReminder()" class="w-full mt-2 bg-white hover:bg-gray-100 active:scale-95 text-argon-dark font-bold py-2 rounded-xl text-xs border border-gray-200 transition">⏰ Recordatorio diario 22:00 (calendario)</button>
             <textarea id="manualJson" rows="4" placeholder='Pega aquí el JSON de la IA...' class="w-full mt-2 bg-white border border-gray-200 rounded-xl px-3 py-2 text-[11px] font-mono text-argon-dark focus:outline-none focus:border-argon-primary"></textarea>
             <button onclick="importManualJson()" class="w-full mt-2 bg-argon-primary hover:bg-[#4a5fcd] active:scale-95 text-white font-bold py-2 rounded-xl text-xs transition">⬇️ Importar respuesta</button>
           </details>
@@ -193,6 +192,7 @@
           </div>
         </div>
       </div>
+      <div id="trackPanel" class="space-y-4 mt-4"></div>
     </div>
 
     <!-- TAB 2: MERCADO -->

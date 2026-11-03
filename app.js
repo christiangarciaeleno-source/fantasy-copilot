@@ -1,9 +1,9 @@
-import { STATE, saveSettings, saveLast, loadLast } from './js/state.js';
+import { STATE, saveSettings, saveLast, loadLast, loadHistory, latestData } from './js/state.js';
 import { $, toast, haptic } from './js/util.js';
 import { analyze, validate, manualPrompt, importManual, ping } from './js/ai.js';
 import { renderAll } from './js/render.js';
 import { DEMO } from './js/demo.js';
-import { exportSummary } from './js/export.js';
+import { exportSummary, exportJson, downloadReminder } from './js/export.js';
 import { setupDragAndDrop, removeImage, pasteFromClipboard, pasteText } from './js/image.js';
 import { copyBookmarklet } from './js/bookmarklet.js';
 
@@ -116,11 +116,14 @@ async function runAnalysis() {
 }
 
 // --- Modo manual (sin API) ---
+let skillText; // skills/fantasy-analista/SKILL.md (si no carga, se usa el prompt básico)
+const loadSkill = () => skillText ??= fetch('skills/fantasy-analista/SKILL.md').then((r) => (r.ok ? r.text() : '')).catch(() => '');
+
 async function copyManualPrompt() {
   haptic(15);
   try {
-    await navigator.clipboard.writeText(manualPrompt());
-    toast('Prompt copiado: pégalo en Gemini o Claude junto a tus capturas', '📋');
+    await navigator.clipboard.writeText(manualPrompt(await loadSkill(), latestData()));
+    toast('Prompt copiado: pégalo en Gemini o Claude con tus capturas o tu texto', '📋');
   } catch {
     toast('No se pudo acceder al portapapeles', '🔒');
   }
@@ -135,6 +138,13 @@ function importManualJson() {
   } catch (err) {
     toast(`No se pudo importar: ${err.message}`, '❌');
   }
+}
+
+function loadSnapshot(i) {
+  haptic(15);
+  STATE.data = STATE.history[i].data; // se ve el día elegido sin tocar el historial
+  renderAll(STATE.data);
+  switchTab('once');
 }
 
 function loadCompleteDemo() {
@@ -167,13 +177,14 @@ const dismissPWA = () => $('pwaInstallBanner').classList.add('hidden');
 // Los handlers inline (onclick) del HTML necesitan globals.
 Object.assign(window, {
   testConnection, syncEngineFields, switchTab, toggleSettingsModal, saveAppSettings, runAnalysis,
-  loadCompleteDemo, copyManualPrompt, importManualJson, installPWA, dismissPWA, exportSummary, removeImage, pasteFromClipboard, pasteText, copyBookmarklet
+  loadCompleteDemo, loadSnapshot, exportJson, downloadReminder, copyManualPrompt, importManualJson, installPWA, dismissPWA, exportSummary, removeImage, pasteFromClipboard, pasteText, copyBookmarklet
 });
 
 // --- Arranque ---
 loadSettingsForm();
 setupDragAndDrop();
 setupPWA();
+loadHistory();
 const last = loadLast();
 try { if (STATE.data) validate(STATE.data); } catch { STATE.data = null; } // dato guardado corrupto: se ignora
 renderAll(STATE.data ?? undefined);

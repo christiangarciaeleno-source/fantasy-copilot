@@ -1,7 +1,10 @@
 import { $, esc, money } from './util.js';
+import { STATE } from './state.js';
 
 const POS = ['POR', 'DEF', 'MED', 'DEL'];
-const EMPTY = { saldo: 0, once: [], ventas_recomendadas: [], compras_mercado: [] };
+const EMPTY = { saldo: 0, once: [], ventas_recomendadas: [], compras_mercado: [], consejos: [] };
+
+export const totalXp = (once) => once.reduce((s, p) => s + (Number(p.xp) || 0), 0);
 
 export const formation = (once) => POS.slice(1).map((p) => once.filter((j) => j.posicion === p).length).join('-');
 
@@ -17,6 +20,7 @@ export function renderAll(data = EMPTY) {
   renderPitch(data.once);
   renderMarket(data.compras_mercado);
   renderSales(data.ventas_recomendadas);
+  renderTrack(data.consejos ?? []);
 }
 
 function renderBalance(saldo, ventas) {
@@ -63,7 +67,7 @@ function pin(p) {
 
 function renderPitch(once) {
   const players = once.length ? once : placeholderPitch();
-  const xp = players.reduce((s, p) => s + (Number(p.xp) || 0), 0);
+  const xp = totalXp(players);
   const fm = formation(players);
   $('kpiXP').textContent = `${xp.toFixed(1)} pts`;
   $('kpiFormation').textContent = `Esquema: 1-${fm}`;
@@ -112,4 +116,26 @@ function renderSales(ventas) {
       </div>
       <span class="text-[10px] font-extrabold bg-rose-50 text-argon-danger px-2 py-1 rounded-full shrink-0">${money(v.vm)}</span>
     </div>`).join('') : emptyBox('🛡️', 'Sin ventas recomendadas.');
+}
+
+const PRIO = { alta: 'bg-rose-50 text-argon-danger', media: 'bg-amber-50 text-argon-warning', baja: 'bg-gray-100 text-gray-500' };
+const card = (title, body) => `<div class="bg-white rounded-2xl shadow-argon p-4 md:p-5 border border-gray-100"><h3 class="text-sm font-extrabold text-argon-dark">${title}</h3><div class="mt-3 space-y-2">${body}</div></div>`;
+
+// Consejos del analista + historial (un análisis por día) para el seguimiento.
+function renderTrack(consejos) {
+  const advice = consejos.length ? consejos.map((c) => `
+    <div class="flex gap-2 items-start text-xs text-argon-dark">
+      <span class="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full shrink-0 ${PRIO[c.prioridad] ?? PRIO.baja}">${esc(c.prioridad ?? 'baja')}</span>
+      <span>${esc(c.texto)}${c.fecha_limite ? ` <b class="text-argon-muted">· hasta ${esc(c.fecha_limite)}</b>` : ''}</span>
+    </div>`).join('') : '<p class="text-xs text-argon-muted">Sin consejos todavía: importa un análisis.</p>';
+  const rows = STATE.history.slice(-10).reverse().map((h) => {
+    const i = STATE.history.indexOf(h), prev = STATE.history[i - 1]?.data;
+    const delta = prev ? h.data.saldo - prev.saldo : 0;
+    return `
+    <button onclick="loadSnapshot(${i})" class="w-full flex justify-between gap-2 text-left text-[11px] bg-gray-50 hover:bg-gray-100 rounded-lg px-3 py-2">
+      <span class="font-bold text-argon-dark">${esc(h.fecha)}${h.data.jornada ? ` · J${esc(h.data.jornada)}` : ''}</span>
+      <span class="text-argon-muted">${money(h.data.saldo)}${delta ? ` (${delta > 0 ? '+' : ''}${money(delta)})` : ''} · ${totalXp(h.data.once).toFixed(1)} xP · ${h.data.consejos?.length ?? 0} consejos</span>
+    </button>`;
+  }).join('') || '<p class="text-xs text-argon-muted">Aún no hay análisis guardados.</p>';
+  $('trackPanel').innerHTML = card('🧭 Consejos del analista', advice) + card('📈 Seguimiento', rows);
 }
