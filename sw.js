@@ -1,5 +1,5 @@
 // Subir CACHE al cambiar cualquier asset para invalidar la caché anterior.
-const CACHE = 'fantasy-pro-v22';
+const CACHE = 'fantasy-pro-v23';
 const PRECACHE = [
   './', 'index.html', 'app.css', 'app.js', 'manifest.json', 'icon.svg', 'icon-192.png', 'icon-512.png',
   'js/util.js', 'js/state.js', 'js/ai.js', 'js/render.js', 'js/demo.js', 'js/export.js', 'js/image.js', 'js/openrouter.js', 'js/team.js', 'data/laliga.json', 'skills/fantasy-analista/SKILL.md'
@@ -18,20 +18,22 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// Stale-while-revalidate para GET (assets propios + Tailwind/fuentes CDN). Las llamadas a las APIs de IA son POST: no pasan por aquí.
+// Archivos propios: red primero (revalidando, para ver siempre la última versión) y caché si no hay red o tarda más de 4 s.
+// Resto de GET (fuentes, fotos): caché primero y se refresca por detrás. Las APIs de IA son POST: no pasan por aquí.
 self.addEventListener('fetch', (e) => {
   const { origin, hostname } = new URL(e.request.url);
   if (e.request.method !== 'GET' || (origin !== location.origin && (hostname.endsWith('googleapis.com') || hostname === 'openrouter.ai'))) return; // listas de modelos: siempre frescas
+  const own = origin === location.origin;
+  const net = () => fetch(e.request, own ? { cache: 'no-cache' } : {});
   e.respondWith(
     caches.open(CACHE).then(async (cache) => {
+      const save = (res) => { if (res.ok || res.type === 'opaque') cache.put(e.request, res.clone()); return res; };
+      if (own) {
+        const timeout = new Promise((_, no) => setTimeout(no, 4000));
+        return Promise.race([net().then(save), timeout]).catch(async () => (await cache.match(e.request)) ?? net());
+      }
       const hit = await cache.match(e.request);
-      const net = fetch(e.request)
-        .then((res) => {
-          if (res.ok || res.type === 'opaque') cache.put(e.request, res.clone());
-          return res;
-        })
-        .catch(() => hit);
-      return hit || net;
+      return hit ?? net().then(save);
     })
   );
 });

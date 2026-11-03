@@ -40,7 +40,7 @@ Regla: ningún archivo (salvo `app.css`, generado) supera 300 líneas (máximo a
 - Repositorio: https://github.com/christiangarciaeleno-source/fantasy-copilot (público, rama `main`)
 - GitHub Pages: fuente `main` / `/`, despliegue automático en cada `git push`.
 - URL pública: **https://christiangarciaeleno-source.github.io/fantasy-copilot/**
-- Al cambiar cualquier asset, subir `CACHE` en `sw.js` (`fantasy-pro-vN`) para invalidar la caché; en el móvil hay que cerrar y abrir la PWA dos veces.
+- Al cambiar cualquier asset, subir `CACHE` en `sw.js` (`fantasy-pro-vN`). El SW usa red primero para los archivos propios (caché solo si no hay red o tarda > 4 s) y recarga la página sola cuando una versión nueva toma el control; la versión se ve en Ajustes. Un móvil con un SW anterior (v22 o menos, stale-while-revalidate) necesita cerrar y abrir la PWA dos veces una sola vez.
 - CSS: regenerar `app.css` con `./build-css.sh` si se añaden clases en `index.html` o `js/`.
 
 ## 3. Cómo funciona

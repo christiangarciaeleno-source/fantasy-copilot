@@ -163,7 +163,12 @@ function setupPWA() {
     STATE.deferredPrompt = e;
     $('pwaInstallBanner').classList.remove('hidden');
   });
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(console.error);
+  if ('serviceWorker' in navigator) {
+    const had = Boolean(navigator.serviceWorker.controller); // en la primera instalación no hay nada que recargar
+    navigator.serviceWorker.addEventListener('controllerchange', () => had && location.reload());
+    navigator.serviceWorker.register('sw.js').catch(console.error);
+  }
+  caches?.keys().then((k) => { $('appVersion').textContent = k.find((x) => x.startsWith('fantasy-pro-'))?.replace('fantasy-pro-', 'Versión ') ?? ''; });
 }
 
 async function installPWA() {

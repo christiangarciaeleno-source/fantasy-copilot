@@ -191,4 +191,32 @@ assert.ok(!('equipo' in JSON.parse(buildJson({}, [], { saldo: 0, plantilla: [], 
 const laliga = JSON.parse((await import('node:fs')).readFileSync('./data/laliga.json', 'utf8'));
 assert.equal(laliga.equipos.length, 20);
 assert.ok(laliga.equipos.every((e) => e.jugadores.length > 15 && e.jugadores.every((j) => ['POR', 'DEF', 'MED', 'DEL'].includes(j.p))));
+// --- Service Worker: archivos propios con red primero y caché de respaldo (si falla, la app no se queda en una versión vieja ni en blanco) ---
+const vm = await import('node:vm');
+const swSrc = (await import('node:fs')).readFileSync('./sw.js', 'utf8');
+async function swFetch(url, { net, cached = {}, method = 'GET' }) {
+  const store = new Map(Object.entries(cached));
+  const cache = { match: async (r) => store.get(r.url), put: async (r, res) => store.set(r.url, res) };
+  const on = {};
+  vm.runInNewContext(swSrc, { self: { addEventListener: (t, f) => { on[t] = f; }, skipWaiting() {}, clients: { claim() {} } }, location: { origin: 'https://x.io' }, URL, Promise, Request: class { constructor(u) { this.url = u; } }, caches: { open: async () => cache, keys: async () => [], delete: async () => true }, fetch: net, setTimeout: (f) => setTimeout(f, 5) });
+  let out;
+  on.fetch({ request: { url, method }, respondWith: (p) => { out = p; } });
+  return { res: out && await out, store, handled: out !== undefined };
+}
+const resp = (tag) => ({ ok: true, tag, clone() { return this; } });
+const own = 'https://x.io/app.js';
+let r = await swFetch(own, { net: async () => resp('red'), cached: { [own]: resp('vieja') } });
+assert.equal(r.res.tag, 'red'); // con red se ve siempre lo último...
+assert.equal(r.store.get(own).tag, 'red'); // ...y se guarda para la próxima vez sin red
+r = await swFetch(own, { net: async () => { throw new TypeError('offline'); }, cached: { [own]: resp('vieja') } });
+assert.equal(r.res.tag, 'vieja'); // sin red: la copia guardada
+r = await swFetch(own, { net: () => new Promise(() => {}), cached: { [own]: resp('vieja') } });
+assert.equal(r.res.tag, 'vieja'); // red colgada: no se espera más de 4 s
+const photo = 'https://commons.wikimedia.org/foto.jpg';
+r = await swFetch(photo, { net: async () => resp('red'), cached: { [photo]: resp('foto-guardada') } });
+assert.equal(r.res.tag, 'foto-guardada'); // fotos y fuentes: caché primero
+r = await swFetch(photo, { net: async () => resp('red') });
+assert.equal(r.res.tag, 'red');
+assert.equal((await swFetch(own, { net: async () => resp('x'), method: 'POST' })).handled, false); // las APIs de IA no pasan por el SW
+assert.equal((await swFetch('https://openrouter.ai/api/v1/models', { net: async () => resp('x') })).handled, false);
 console.log('OK');
